@@ -27,12 +27,23 @@ public class NMS_Server {
     private static final int UDP_PORT = 5000; // Porta (à escolha) UDP para comunicação com os NMS_Agents 
     private static final int TCP_PORT = 6000; // Porta (à escolha) TCP para comunicação com os AlertFlows
 
-    new Thread(new NetTaskHandler(5000)).start();
-    new Thread(new AlertFlowHandler(6000)).start();
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         System.out.println("NMS Server iniciado.");
+        
+        Thread NetTaskLisener = new Thread(new NetTaskListener(UDP_PORT));
+        Thread AlertFlowListener = new Thread(new AlertFlowListener(TCP_PORT));
 
+        NetTaskLisener.start();
+        AlertFlowListener.start();
+
+        try {
+            NetTaskLisener.join();
+            AlertFlowListener.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        /*
         // Leitura do ficheiro JSON
         JSONTaskReader jsonTaskReader = new JSONTaskReader();
         jsonTaskReader.readConfigFile("config/config.json");
@@ -61,7 +72,7 @@ public class NMS_Server {
                 e.printStackTrace();
             }
         }
-
+        */
         System.out.println("NMS Server terminado.");
     }
 }
