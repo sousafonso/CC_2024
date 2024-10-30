@@ -1,3 +1,9 @@
+/**
+ * Task.java
+ * @description Classe que representa uma tarefa a ser executada por um NMS_Agent. A tarefa é composta por um
+ * identificador, tipo, descrição, valor, timestamp, frequência e métricas.
+ */
+
 package message;
 
 public class Task extends Data {
