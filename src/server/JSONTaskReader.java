@@ -15,32 +15,30 @@ public class JSONTaskReader {
     private String frequency;
 
     // Método para ler o ficheiro JSON
-    public void readConfigFile(String path) {
+    public List<Task> readConfigFile(String filePath) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JSONTaskReader jsonTaskReader = mapper.readValue(new File(path), JSONTaskReader.class);
-            this.devices = jsonTaskReader.getDevices();
-            this.taskId = jsonTaskReader.getTaskId();
-            this.frequency = jsonTaskReader.getFrequency();
+            Config config = mapper.readValue(new File(filePath), Config.class);
+            return config.getTasks();
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
+        }   
+        
+        
+    }
+
+    class Config {
+        private List<Task> tasks;
+    
+        public List<Task> getTasks() {
+            return tasks;
         }
-
-        System.out.println("Ficheiro JSON lido com sucesso.");
-
-        // Exibir os dispositivos e suas métricas
-        for (Device device : devices) {
-            System.out.println("Dispositivo: " + device.getDeviceId());
-            System.out.println("Métricas:");
-            System.out.println("  CPU: " + device.getDeviceMetrics().isCpuUsage());
-            System.out.println("  RAM: " + device.getDeviceMetrics().isRamUsage());
-            System.out.println("  Interfaces: " + device.getDeviceMetrics().getInterfaceStats());
+    
+        public void setTasks(List<Task> tasks) {
+            this.tasks = tasks;
         }
-
-        System.out.println("Tarefa: " + taskId);
-
-        System.out.println("Frequência: " + frequency);
-}
+    }
 
     // Classe que representa um Dispositivo no JSON
     class Device {
