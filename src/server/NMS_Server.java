@@ -9,6 +9,7 @@ package server;
 import java.util.List;
 
 public class NMS_Server {
+    private StorageModule storageModule;
     private JSONTaskReader taskReader;
     private NetTaskHandler netTaskHandler;
     private AlertFlowHandler alertFlowHandler;

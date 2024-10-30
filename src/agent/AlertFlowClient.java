@@ -27,7 +27,7 @@ public class AlertFlowClient {
     // }
 
     public void sendAlert(Notification notification) {
-        try (Socket socket = new Socket("localhost", 5001);  // Porta TCP para AlertFlow
+        try (Socket socket = new Socket("localhost", 5001);
              OutputStream output = socket.getOutputStream();
              PrintWriter writer = new PrintWriter(output, true)) {
 

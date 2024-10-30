@@ -32,25 +32,44 @@ public class NetTaskClient {
     // }
 
     private DatagramSocket socket;
+    private InetAddress serverAddress;
+    private int serverPort;
+    private AtomicInteger sequenceNumber = new AtomicInteger(0);
 
-    public NetTaskClient() {
+    public NetTaskClient(String serverIp, int serverPort) {
         try {
             this.socket = new DatagramSocket();
-        } catch (SocketException e) {
+            this.serverAddress = InetAddress.getByName(serverIp);
+            this.serverPort = serverPort;
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Envia o resultado da tarefa para o servidor usando UDP
+    // Envio de métricas com controle de sequência
     public void sendTaskResult(TaskResult result) {
         try {
-            String message = "TaskResult: " + result.getTaskId() + " - Success: " + result.isSuccess();
+            int seqNum = sequenceNumber.incrementAndGet();
+            String message = "SEQ:" + seqNum + " TaskResult: " + result.getTaskId() + " - Success: " + result.isSuccess();
             byte[] buffer = message.getBytes();
-            InetAddress serverAddress = InetAddress.getByName("localhost");
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
 
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, 5000); // Porta do servidor NetTask (UDP)
+            // Envia a mensagem e espera por ACK
             socket.send(packet);
-            System.out.println("Resultado da tarefa enviado via UDP: " + result.getTaskId());
+            socket.setSoTimeout(1000);  // Timeout de 1 segundo para retransmissão
+
+            // Escuta por ACK
+            byte[] ackBuffer = new byte[256];
+            DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
+            socket.receive(ackPacket);
+
+            String ackMessage = new String(ackPacket.getData(), 0, ackPacket.getLength());
+            if (ackMessage.equals("ACK:" + seqNum)) {
+                System.out.println("ACK recebido para SEQ:" + seqNum);
+            } else {
+                System.out.println("ACK incorreto. Retransmitindo...");
+                sendTaskResult(result); // Retransmissão
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

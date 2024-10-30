@@ -50,7 +50,7 @@ public class NetTaskHandler implements Runnable {
     @Override
     public void run() {
         byte[] buffer = new byte[1024];
-        System.out.println("NetTaskHandler à espera de pacotes UDP na porta " + port);
+        System.out.println("NetTaskHandler esperando por pacotes UDP na porta " + port);
 
         while (true) {
             try {
@@ -60,25 +60,18 @@ public class NetTaskHandler implements Runnable {
                 String receivedMessage = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Mensagem recebida via UDP: " + receivedMessage);
 
-                // Processar o resultado da tarefa aqui (por exemplo, armazenar ou gerar logs)
+                // Extrai número de sequência
+                int seqNum = Integer.parseInt(receivedMessage.split(":")[1]);
+
+                // Envia ACK
+                String ackMessage = "ACK:" + seqNum;
+                byte[] ackBuffer = ackMessage.getBytes();
+                DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length, packet.getAddress(), packet.getPort());
+                socket.send(ackPacket);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    // Método para enviar tarefas aos agentes (se necessário)
-    public void sendTaskToAgents(Task task) {
-        try {
-            String message = "Task ID: " + task.getTaskId() + ", Frequency: " + task.getFrequency();
-            byte[] buffer = message.getBytes();
-            InetAddress agentAddress = InetAddress.getByName("localhost");
-
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, agentAddress, 5001); // Porta do agente
-            socket.send(packet);
-            System.out.println("Tarefa enviada para o agente via UDP: " + task.getTaskId());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
