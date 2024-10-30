@@ -9,16 +9,17 @@ package message;
 import java.util.List;
 
 public class Task extends Data {
-    //private String id; ????
+    private String id; 
     private String frequency;
     private String[] metrics;
     private List<Device> devices;
 
-    public Task(String id, String type, String description, String value, String timestamp, String frequency, String[] metrics, List<Device> devices) {
-        super(id, type, description, value, timestamp);
+    public Task(String DataID, String type, String description, String value, String timestamp, String frequency, String[] metrics, List<Device> devices, String TaskID) {
+        super(DataID, type, description, value, timestamp);
         this.frequency = frequency;
         this.metrics = metrics;
         this.devices = devices;
+        this.id = TaskID;
     }
 
     public String getFrequency() {
@@ -43,6 +44,14 @@ public class Task extends Data {
 
     public void setDevices(List<Device> devices) {
         this.devices = devices;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
