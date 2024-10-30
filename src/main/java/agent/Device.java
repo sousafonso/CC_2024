@@ -1,12 +1,10 @@
 package agent;
 
-import java.util.List;
-
 public class Device {
     private String deviceId;
     private DeviceMetrics deviceMetrics;
     private LinkMetrics linkMetrics;
-    private AlertFlowConditions alertFlowConditions;
+    //private AlertFlowConditions alertFlowConditions;
 
     // Getters e Setters
     public String getDeviceId() {
@@ -33,11 +31,11 @@ public class Device {
         this.linkMetrics = linkMetrics;
     }
 
-    public AlertFlowConditions getAlertFlowConditions() {
+    /*public AlertFlowConditions getAlertFlowConditions() {
         return alertFlowConditions;
     }
 
     public void setAlertFlowConditions(AlertFlowConditions alertFlowConditions) {
         this.alertFlowConditions = alertFlowConditions;
-    }
+    }*/
 }

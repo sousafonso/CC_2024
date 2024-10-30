@@ -1,7 +1,7 @@
 package agent;
 
 public class LinkMetrics {
-    private Bandwidth bandwidth;
+    /*private Bandwidth bandwidth;
     private int jitter;
     private int packetLoss;
     private int latency;
@@ -36,5 +36,5 @@ public class LinkMetrics {
 
     public void setLatency(int latency) {
         this.latency = latency;
-    }
+    }*/
 }

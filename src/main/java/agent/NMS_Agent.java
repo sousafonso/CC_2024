@@ -1,8 +1,9 @@
 package agent;
 
 import java.util.concurrent.*;
+import message.*;
 
-public class NMS_Agent implements Runnable {
+//public class NMS_Agent implements Runnable {
     // public static void main(String[] args) {
     //     try {
     //         // Registrar o agente no servidor e solicitar uma tarefa
@@ -23,7 +24,7 @@ public class NMS_Agent implements Runnable {
     //     }
     // }
 
-    private String agentId;
+    /*private String agentId;
     private MetricCollector metricCollector;
     private NetTaskClient netTaskClient;
     private AlertFlowClient alertFlowClient;
@@ -72,4 +73,4 @@ public class NMS_Agent implements Runnable {
             }
         }).start();
     }
-}
+}*/

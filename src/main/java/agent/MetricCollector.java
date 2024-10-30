@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MetricCollector {
 
-    public Data collectPing(String target) {
+    /*public Data collectPing(String target) {
         return executeCommand(List.of("ping", "-c", "4", target));
     }
 
@@ -38,5 +38,5 @@ public class MetricCollector {
             output.append("Error executing command: ").append(command);
         }
         return new Data(command.toString(), output.toString());
-    }
+    }*/
 }

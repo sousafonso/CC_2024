@@ -26,7 +26,7 @@ public class AlertFlowClient {
     //     }
     // }
 
-    public void sendAlert(Notification notification) {
+    /*public void sendAlert(Notification notification) {
         try (Socket socket = new Socket("localhost", 5001);
              OutputStream output = socket.getOutputStream();
              PrintWriter writer = new PrintWriter(output, true)) {
@@ -36,5 +36,5 @@ public class AlertFlowClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }

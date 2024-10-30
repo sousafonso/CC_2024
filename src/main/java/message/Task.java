@@ -8,6 +8,8 @@ package message;
 
 import java.util.List;
 
+import agent.Device;
+
 public class Task extends Data {
     private String id; 
     private String frequency;

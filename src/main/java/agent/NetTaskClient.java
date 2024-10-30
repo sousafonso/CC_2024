@@ -31,7 +31,7 @@ public class NetTaskClient {
     //     socket.close();
     // }
 
-    private DatagramSocket socket;
+    /*private DatagramSocket socket;
     private InetAddress serverAddress;
     private int serverPort;
     private AtomicInteger sequenceNumber = new AtomicInteger(0);
@@ -73,5 +73,5 @@ public class NetTaskClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }

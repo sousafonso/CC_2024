@@ -1,6 +1,9 @@
 import java.util.HashMap;
 import java.util.Map;
 
+import message.Notification;
+import message.TaskResult;
+
 public class StorageModule {
     private Map<String, TaskResult> taskResults = new HashMap<>();
     private Map<String, Notification> alerts = new HashMap<>();
@@ -22,6 +25,6 @@ public class StorageModule {
         System.out.println("----- Métricas -----");
         taskResults.forEach((k, v) -> System.out.println(k + ": " + v.getResultData()));
         System.out.println("----- Alertas -----");
-        alerts.forEach((k, v) -> System.out.println(k + ": " + v.getMessage()));
+        //alerts.forEach((k, v) -> System.out.println(k + ": " + v.getMessage()));
     }
 }

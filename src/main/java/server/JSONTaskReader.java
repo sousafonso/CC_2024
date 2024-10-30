@@ -1,8 +1,11 @@
 package server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import message.Task;
 
 public class JSONTaskReader {
     public List<Task> readConfigFile(String filePath) {
