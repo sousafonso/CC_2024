@@ -6,14 +6,19 @@
 
 package message;
 
+import java.util.List;
+
 public class Task extends Data {
+    //private String id; ????
     private String frequency;
     private String[] metrics;
+    private List<Device> devices;
 
-    public Task(String id, String type, String description, String value, String timestamp, String frequency, String[] metrics) {
+    public Task(String id, String type, String description, String value, String timestamp, String frequency, String[] metrics, List<Device> devices) {
         super(id, type, description, value, timestamp);
         this.frequency = frequency;
         this.metrics = metrics;
+        this.devices = devices;
     }
 
     public String getFrequency() {
@@ -22,6 +27,22 @@ public class Task extends Data {
 
     public String[] getMetrics() {
         return metrics;
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency = frequency;
+    }
+
+    public void setMetrics(String[] metrics) {
+        this.metrics = metrics;
+    }
+
+    public List<Device> getDevices() {
+        return devices;
+    }
+
+    public void setDevices(List<Device> devices) {
+        this.devices = devices;
     }
 
     @Override

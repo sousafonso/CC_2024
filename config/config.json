@@ -1,0 +1,36 @@
+{
+    "tasks": [
+      {
+        "task_id": "task-202",
+        "frequency": 20,
+        "devices": [
+          {
+            "device_id": "r1",
+            "device_metrics": {
+              "cpu_usage": true,
+              "ram_usage": true,
+              "interface_stats": ["eth0", "eth1", "eth2"]
+            },
+            "link_metrics": {
+              "bandwidth": {
+                "role": "client",
+                "server_address": "192.168.1.1",
+                "duration": 10,
+                "protocol": "TCP"
+              },
+              "jitter": 100,
+              "packet_loss": 5,
+              "latency": 50
+            },
+            "alertflow_conditions": {
+              "cpu_usage": 80,
+              "ram_usage": 90,
+              "interface_stats": 2000,
+              "packet_loss": 5,
+              "jitter": 100
+            }
+          }
+        ]
+      }
+    ]
+  }

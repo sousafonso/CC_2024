@@ -43,7 +43,6 @@ public class NMS_Server {
             e.printStackTrace();
         }
         
-        /*
         // Leitura do ficheiro JSON
         JSONTaskReader jsonTaskReader = new JSONTaskReader();
         jsonTaskReader.readConfigFile("config/config.json");
@@ -72,7 +71,6 @@ public class NMS_Server {
                 e.printStackTrace();
             }
         }
-        */
         System.out.println("NMS Server terminado.");
     }
 }
