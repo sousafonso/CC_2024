@@ -15,14 +15,14 @@ public class NMS_Server {
 
     public void initialize() {
 
-        System.out.println("Iniciando servidor");
+        System.out.println("A iniciar servidor");
         // Carregar tarefas do JSON de configuração
         List<Task> tasks = taskReader.readConfigFile("config/config.json");
 
         // Distribuir tarefas para os agentes
         distributeTasks(tasks);
 
-        // Inicializar os listeners de rede
+        // Inicializar os listeners de rede em threads separadas que servem para receber mensagens dos agentes
         new Thread(netTaskHandler).start();
         new Thread(alertFlowHandler).start();
     }
@@ -30,7 +30,7 @@ public class NMS_Server {
     private void distributeTasks(List<Task> tasks) {
         if (tasks != null) {
             for (Task task : tasks) {
-                System.out.println("Distribuindo tarefa: " + task.getTaskId());
+                System.out.println("A distruibuir tarefa: " + task.getTaskId());
                 netTaskHandler.sendTaskToAgents(task);  // Enviar a tarefa para NetTaskHandler
             }
         } else {
