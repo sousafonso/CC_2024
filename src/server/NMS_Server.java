@@ -1,12 +1,7 @@
-/**
- * @description Classe principal do servidor que inicia o servidor. O servidor  é responsável por carregar as
- * tarefas de configuração a partir de um arquivo JSON, distribuir as tarefas para os agentes e iniciar os listeners
- * de rede para receber mensagens dos agentes.
- */
-
-package server;
-
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class NMS_Server {
     private StorageModule storageModule;
@@ -15,14 +10,15 @@ public class NMS_Server {
     private AlertFlowHandler alertFlowHandler;
 
     public NMS_Server() {
-        this.taskReader = new JSONTaskReader();
-        this.netTaskHandler = new NetTaskHandler(5000);  // Porta UDP para NetTask
-        this.alertFlowHandler = new AlertFlowHandler(5001);  // Porta TCP para AlertFlow
+        this.storageModule = new StorageModule(); // Inicializa o módulo de armazenamento
+        this.taskReader = new JSONTaskReader(); // Inicializa o leitor de tarefas
+        this.netTaskHandler = new NetTaskHandler(5000, storageModule);  // Porta UDP e armazena métricas
+        this.alertFlowHandler = new AlertFlowHandler(5001, storageModule);  // Porta TCP e armazena alertas
     }
 
     public void initialize() {
-
         System.out.println("A iniciar servidor");
+
         // Carregar tarefas do JSON de configuração
         List<Task> tasks = taskReader.readConfigFile("config/config.json");
 
@@ -32,17 +28,25 @@ public class NMS_Server {
         // Inicializar os listeners de rede em threads separadas que servem para receber mensagens dos agentes
         new Thread(netTaskHandler).start();
         new Thread(alertFlowHandler).start();
+
+        // Iniciar exibição periódica de métricas a cada 10 segundos
+        startMetricDisplayScheduler();
     }
 
     private void distributeTasks(List<Task> tasks) {
         if (tasks != null) {
             for (Task task : tasks) {
-                System.out.println("A distruibuir tarefa: " + task.getTaskId());
+                System.out.println("A distribuir tarefa: " + task.getTaskId());
                 netTaskHandler.sendTaskToAgents(task);  // Enviar a tarefa para NetTaskHandler
             }
         } else {
             System.out.println("Nenhuma tarefa carregada.");
         }
+    }
+
+    private void startMetricDisplayScheduler() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() -> storageModule.displayMetrics(), 0, 10, TimeUnit.SECONDS);
     }
 
     public static void main(String[] args) {
