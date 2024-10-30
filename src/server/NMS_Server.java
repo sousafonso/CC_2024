@@ -1,3 +1,9 @@
+/**
+ * @description Classe principal do servidor que inicia o servidor. O servidor  é responsável por carregar as
+ * tarefas de configuração a partir de um arquivo JSON, distribuir as tarefas para os agentes e iniciar os listeners
+ * de rede para receber mensagens dos agentes.
+ */
+
 package server;
 
 import java.util.List;
