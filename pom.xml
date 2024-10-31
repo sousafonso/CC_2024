@@ -4,10 +4,10 @@
     <groupId>org.cc2024</groupId>
     <artifactId>CC_2024</artifactId>
     <version>1.0-SNAPSHOT</version>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
-        <exec.mainClass>org.cc2024.server.NMS_Server</exec.mainClass>
         <jackson.version>2.13.0</jackson.version>
     </properties>
 
