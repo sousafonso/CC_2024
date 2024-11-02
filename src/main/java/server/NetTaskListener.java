@@ -20,7 +20,8 @@ public class NetTaskListener implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 System.out.println("NetTaskListener iniciado na porta " + udpPort);
                 socket.receive(packet);
-                //new Thread(new NetTaskHandler(clientSocket)).start();
+                Thread dataHandler = new Thread(new NetTaskHandler(buffer));
+                dataHandler.start();
             }
         } catch (Exception e) {
             e.printStackTrace();

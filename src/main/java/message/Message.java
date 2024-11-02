@@ -1,12 +1,16 @@
 package message;
 
+import java.net.InetAddress;
+
 public class Message {
+    private InetAddress source;
+    private InetAddress destination;
     private int seqNumber;
     private int ackNumber;
+    private MessageType type; //TODO talvez substituir por conjunto de bits
     private Data msgData;
-    private int type; //TODO talvez substituir por conjunto de bits
 
-    public Message(int seqNumber, int ackNumber, Data msgData, int type) {
+    public Message(int seqNumber, int ackNumber, Data msgData, MessageType type) {
         this.seqNumber = seqNumber;
         this.ackNumber = ackNumber;
         this.msgData = msgData;
@@ -25,7 +29,7 @@ public class Message {
         return msgData;
     }
 
-    public int getType() {
+    public MessageType getType() {
         return type;
     }
 
@@ -52,7 +56,7 @@ public class Message {
         this.msgData = msgData;
     }
 
-    public void setType(int type) {
+    public void setType(MessageType type) {
         this.type = type;
     }
 }

@@ -1,7 +1,10 @@
 package server;
 
-import java.net.*;
-import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+import message.Message;
 
 public class NetTaskHandler implements Runnable {
     // private int port;
@@ -35,43 +38,52 @@ public class NetTaskHandler implements Runnable {
     //     }
     // }
 
-    private int port;
-    private DatagramSocket socket;
+    //private int port;
+    //private DatagramSocket socket;
+    private byte[] data = new byte[1024];
 
-    public NetTaskHandler(int port) {
-        this.port = port;
-        try {
-            this.socket = new DatagramSocket(port);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
+    public NetTaskHandler(byte[] data) {
+        this.data = data;
+    }
+
+    private void processRegister(Message msg){
+        //TODO Adicionar a clientes ativos ?
+    }
+
+    private void processTaskResult(Message msg){
+        //TODO Guardar resultado da tarefa ?
+    }
+
+    private void processAck(Message msg){
+        //TODO so receber ack / tirar de lista de pacotes ainda sem ack ?
     }
 
     @Override
     public void run() {
-        byte[] buffer = new byte[1024];
-        System.out.println("NetTaskHandler esperando por pacotes UDP na porta " + port);
+        Message msg = null;
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        
+        try{
+            ObjectInputStream is = new ObjectInputStream(in);
+            msg = (Message) is.readObject();
+        } catch (IOException e) {
+            System.out.println("IOException");
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.out.println("Classe não encontrada");
+            e.printStackTrace();
+        }
+        
+        if(msg == null){
+            System.out.println("Processamento da mensagem falhou");
+            return;
+        }
 
-        while (true) {
-            try {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-
-                String receivedMessage = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Mensagem recebida via UDP: " + receivedMessage);
-
-                // Extrai número de sequência
-                int seqNum = Integer.parseInt(receivedMessage.split(":")[1]);
-
-                // Envia ACK
-                String ackMessage = "ACK:" + seqNum;
-                byte[] ackBuffer = ackMessage.getBytes();
-                DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length, packet.getAddress(), packet.getPort());
-                socket.send(ackPacket);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        switch (msg.getType()) {
+            case Regist -> processRegister(msg);
+            case TaskResult -> processTaskResult(msg);
+            case Ack -> processAck(msg);
+            default -> System.out.println("Tipo de mensagem não reconhecido");
         }
     }
 }
