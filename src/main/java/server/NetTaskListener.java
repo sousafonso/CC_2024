@@ -20,10 +20,11 @@ public class NetTaskListener implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 System.out.println("NetTaskListener iniciado na porta " + udpPort);
                 socket.receive(packet);
-                Thread dataHandler = new Thread(new NetTaskHandler(buffer));
+                Thread dataHandler = new Thread(new NetTaskHandler(packet));
                 dataHandler.start();
             }
         } catch (Exception e) {
+            System.out.println("Erro ao receber pacote");
             e.printStackTrace();
         } finally {
             if(socket != null && !socket.isClosed()) {

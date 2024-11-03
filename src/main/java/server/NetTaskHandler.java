@@ -1,49 +1,35 @@
 package server;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 import message.Message;
+import util.Util;
 
 public class NetTaskHandler implements Runnable {
-    // private int port;
-    // private DatagramSocket socket;
+    private DatagramPacket packet;
 
-    // public NetTaskHandler(int port) {
-    //     this.port = port;
-    //     try {
-    //         this.socket = new DatagramSocket(port);
-    //     } catch (SocketException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+    public NetTaskHandler(DatagramPacket packet) {
+        this.packet = packet;
+    }
 
-    // @Override
-    // public void run() {
-    //     // Lógica para escutar mensagens dos agentes (se necessário)
-    // }
-
-    // public void sendTaskToAgents(Task task) {
-    //     try {
-    //         String message = "Task ID: " + task.getTaskId() + ", Frequency: " + task.getFrequency();
-    //         byte[] buffer = message.getBytes();
-    //         InetAddress agentAddress = InetAddress.getByName("localhost");
-
-    //         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, agentAddress, 5001);
-    //         socket.send(packet);
-    //         System.out.println("Tarefa enviada para o agente: " + task.getTaskId());
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    // }
-
-    //private int port;
-    //private DatagramSocket socket;
-    private byte[] data = new byte[1024];
-
-    public NetTaskHandler(byte[] data) {
-        this.data = data;
+    private void sendReply(Message msg){
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket();
+            byte[] buffer = Util.serialize(msg);
+            
+            DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
+            socket.send(sendPacket);
+        } catch (IOException e) {
+            System.out.println("Erro ao enviar resposta");
+            e.printStackTrace();
+        } finally {
+            if(socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        }   
     }
 
     private void processRegister(Message msg){
@@ -60,19 +46,7 @@ public class NetTaskHandler implements Runnable {
 
     @Override
     public void run() {
-        Message msg = null;
-        ByteArrayInputStream in = new ByteArrayInputStream(data);
-        
-        try{
-            ObjectInputStream is = new ObjectInputStream(in);
-            msg = (Message) is.readObject();
-        } catch (IOException e) {
-            System.out.println("IOException");
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            System.out.println("Classe não encontrada");
-            e.printStackTrace();
-        }
+        Message msg = Util.deserialize(packet.getData());
         
         if(msg == null){
             System.out.println("Processamento da mensagem falhou");
