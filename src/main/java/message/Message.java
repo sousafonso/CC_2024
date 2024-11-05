@@ -1,19 +1,22 @@
 package message;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 
-public class Message {
+public class Message implements Serializable {
     private InetAddress source;
     private InetAddress destination;
     private int seqNumber;
     private int ackNumber;
-    private MessageType type; //TODO talvez substituir por conjunto de bits
-    private Data msgData;
+    private MessageType type;
+    //private Data msgData;
+    private String data; //TODO temporariamente só string para simplificar
 
-    public Message(int seqNumber, int ackNumber, Data msgData, MessageType type) {
+    public Message(int seqNumber, int ackNumber, String msgData, MessageType type) {
         this.seqNumber = seqNumber;
         this.ackNumber = ackNumber;
-        this.msgData = msgData;
+        this.data = msgData;
+        //this.msgData = msgData;
         this.type = type;
     }
 
@@ -25,8 +28,12 @@ public class Message {
         return ackNumber;
     }
 
-    public Data getMsgData() {
+    /*public Data getMsgData() {
         return msgData;
+    }*/
+
+    public String getMsgData() {
+        return data;
     }
 
     public MessageType getType() {
@@ -39,7 +46,7 @@ public class Message {
         return "Message{" +
                 "seqNumber=" + seqNumber +
                 ", ackNumber=" + ackNumber +
-                ", msgData=" + msgData +
+                ", msgData=" + data +
                 ", type=" + type +
                 '}';
     }
@@ -52,8 +59,8 @@ public class Message {
         this.ackNumber = ackNumber;
     }
 
-    public void setMsgData(Data msgData) {
-        this.msgData = msgData;
+    public void setMsgData(String msgData) {
+        this.data = msgData;
     }
 
     public void setType(MessageType type) {
