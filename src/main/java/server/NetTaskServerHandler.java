@@ -5,12 +5,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import message.Message;
+import message.MessageType;
 import util.Util;
 
-public class NetTaskHandler implements Runnable {
+public class NetTaskServerHandler implements Runnable {
     private DatagramPacket packet;
 
-    public NetTaskHandler(DatagramPacket packet) {
+    public NetTaskServerHandler(DatagramPacket packet) {
         this.packet = packet;
     }
 
@@ -33,7 +34,9 @@ public class NetTaskHandler implements Runnable {
     }
 
     private void processRegister(Message msg){
-        //TODO Adicionar a clientes ativos ?
+        System.out.println(msg.toString());
+        Message reply = new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), "tarefa:5 flexoes", MessageType.Task);
+        sendReply(reply);
     }
 
     private void processTaskResult(Message msg){

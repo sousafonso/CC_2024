@@ -1,7 +1,7 @@
 package server;
 
 public class NMS_Server {
-    private final int UDP_PORT = 5000;
+    private final int UDP_PORT = 5000; //TODO talvez mover constantes para a classe NetTaskServerListener
     private final int TCP_PORT = 6000;
 
     //private StorageModule storageModule;
@@ -25,13 +25,13 @@ public class NMS_Server {
 
         // Distribuir tarefas para os agentes
         //distributeTasks(tasks);
-        Thread NetTaskLisener = new Thread(new NetTaskListener(UDP_PORT));
+        Thread NetTaskListener = new Thread(new NetTaskServerListener(UDP_PORT));
         //Thread AlertFlowListener = new Thread(new AlertFlowListener(TCP_PORT));
-        NetTaskLisener.start();
+        NetTaskListener.start();
         //AlertFlowListener.start();
 
         try {
-            NetTaskLisener.join();
+            NetTaskListener.join();
             //AlertFlowListener.join();
         } catch (InterruptedException e) {
             e.printStackTrace();

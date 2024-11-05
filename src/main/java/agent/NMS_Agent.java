@@ -1,42 +1,39 @@
 package agent;
 
-import java.util.concurrent.*;
-import message.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-//public class NMS_Agent implements Runnable {
-    // public static void main(String[] args) {
-    //     try {
-    //         // Registrar o agente no servidor e solicitar uma tarefa
-    //         NetTaskClient netTaskClient = new NetTaskClient("localhost", 5000);
-    //         netTaskClient.registerAgent();
+public class NMS_Agent {
+    private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
+    private final int SERVER_UDP_PORT = 5000;
+    private final int SERVER_TCP_PORT = 6000;
+    private InetAddress serverIP;
 
-    //         // Coletar e enviar métricas periodicamente
-    //         MetricCollector metricCollector = new MetricCollector();
-    //         while (true) {
-    //             String metrics = metricCollector.collectMetrics();
-    //             netTaskClient.sendMetrics(metrics);
-
-    //             // Simular intervalo de coleta de métricas
-    //             Thread.sleep(5000);
-    //         }
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    // }
-
-    /*private String agentId;
-    private MetricCollector metricCollector;
+    private String agentId;
+    /*private MetricCollector metricCollector;
     private NetTaskClient netTaskClient;
-    private AlertFlowClient alertFlowClient;
+    private AlertFlowClient alertFlowClient;*/
 
-    public NMS_Agent(String agentId, String serverIp) {
+    public NMS_Agent(String agentId) {
         this.agentId = agentId;
-        this.metricCollector = new MetricCollector();
-        this.netTaskClient = new NetTaskClient(serverIp, 5000); // Porta UDP
-        this.alertFlowClient = new AlertFlowClient(); // Porta TCP
+        try {
+            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
+        } catch (UnknownHostException e) {
+            System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
+        }
     }
 
-    @Override
+    private void start() {
+        Thread NetTaskClient = new Thread(new NetTaskClient(serverIP, SERVER_UDP_PORT));
+        NetTaskClient.start();
+    }
+
+    public static void main(String[] args) {
+        NMS_Agent agent = new NMS_Agent("agent1"); //TODO ver como distinguir e atribuir o id/ip certo ao agent
+        agent.start();
+    }
+
+    /*@Override
     public void run() {
         System.out.println("Agente " + agentId + " iniciado.");
         startMetricCollection();
@@ -72,5 +69,5 @@ import message.*;
                 }
             }
         }).start();
-    }
-}*/
+    }*/
+}

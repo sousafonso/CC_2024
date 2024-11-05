@@ -1,16 +1,53 @@
 package agent;
 
-import java.net.*;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
+import message.*;
+import util.Util;
 
-public class NetTaskClient {
-    // private String serverAddress;
-    // private int serverPort;
+public class NetTaskClient implements Runnable {
+    private final int UDP_PORT = 7777;
+    private InetAddress serverIp;
+    private int serverPort;
 
-    // public NetTaskClient(String serverAddress, int serverPort) {
-    //     this.serverAddress = serverAddress;
-    //     this.serverPort = serverPort;
-    // }
+    public NetTaskClient(InetAddress serverIp, int serverPort) {
+        this.serverIp = serverIp;
+        this.serverPort = serverPort;
+    }
+
+    @Override
+    public void run() {
+        DatagramSocket socket = null;
+        try{
+            socket = new DatagramSocket(UDP_PORT);
+            byte[] byteMsg = Util.serialize(new Message(1, 0, "registo", MessageType.Regist));
+            DatagramPacket registerPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIp, serverPort);
+            socket.send(registerPacket);
+
+            byte[] receiveMsg = new byte[1024];
+            DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
+            socket.receive(receivePacket);
+            Message msg = Util.deserialize(receiveMsg);
+            if(msg.getType() == MessageType.Task) {
+                System.out.println(msg.toString());
+                // processar tarefa
+            }
+        }
+        catch(SocketException e){
+            System.out.println("UDP Socket Agent Error");
+        }
+        catch (IOException e){
+            System.out.println("Erro ao enviar pacote");
+        }
+        finally{
+            if(socket != null && !socket.isClosed()){
+                socket.close();
+            }
+        }
+    }
 
     // public void registerAgent() throws Exception {
     //     DatagramSocket socket = new DatagramSocket();
