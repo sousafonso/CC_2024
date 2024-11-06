@@ -1,3 +1,13 @@
+/**
+ * @description: Classe principal do agente, responsável por se registar no servidor, recolher métricas e enviar alertas.
+ * Envia mensagens para o NetTaskHandler e o AlertFlowHandler no servidor através de NetTaskClient e AlertFlowClient.
+ * 
+ * @responsibility: 
+ *  Registar o agente no servidor ao iniciar.
+    Recolher métricas periodicamente e enviá-las ao servidor.
+    Monitorizar condições críticas e enviar alertas quando necessário.
+ */
+
 package agent;
 
 import java.net.InetAddress;

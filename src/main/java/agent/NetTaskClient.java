@@ -1,3 +1,10 @@
+/**
+ * @description: Cliente UDP no agente para enviar e receber tarefas e métricas via NetTask. Comunica-se com NetTaskHandler no servidor para registo e envio de métricas.
+ * 
+ * @responsibility:
+ *  Enviar mensagens de registo e resultados de tarefas para o servidor via UDP. 
+ */
+
 package agent;
 
 import java.io.IOException;

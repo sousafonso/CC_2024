@@ -1,3 +1,16 @@
+/**
+ * NMS_Server
+ * @description: Classe principal do servidor, responsável por inicializar os componentes e gerenciar a comunicação com os agentes.
+ *  Interage com o NetTaskHandler e o AlertFlowHandler para receber e processar mensagens dos agentes.
+    Utiliza StorageModule para armazenar métricas e alertas.
+ * 
+ * @responsibility:
+ *  Carregar configurações e tarefas iniciais de config.json usando JSONTaskReader.
+    Iniciar os handlers NetTaskHandler (UDP) e AlertFlowHandler (TCP) para receber dados dos agentes.
+    Armazenar métricas e alertas usando o StorageModule.
+    Distribuir tarefas para os agentes.
+ */
+
 package server;
 
 public class NMS_Server {

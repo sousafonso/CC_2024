@@ -1,3 +1,10 @@
+/**
+ * @description: Cliente TCP no agente para enviar alertas críticos ao servidor. Comunica-se com AlertFlowHandler no servidor para enviar alertas críticos.
+ * 
+ * @responsibility:
+ * Enviar alertas críticos para o servidor quando condições críticas forem detectadas.
+ */
+
 package agent;
 
 import java.io.OutputStream;
