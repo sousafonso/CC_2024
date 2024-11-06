@@ -1,3 +1,7 @@
+/**
+ * @description: Classe para conversão de uma mensagem em bytes e vice-versa.
+ */
+
 package util;
 
 import java.io.ByteArrayInputStream;

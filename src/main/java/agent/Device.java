@@ -2,7 +2,7 @@ package agent;
 
 public class Device {
     private String deviceId;
-    private DeviceMetrics deviceMetrics;
+    private DeviceMetrics deviceMetrics; // métricas locais
     private LinkMetrics linkMetrics;
     //private AlertFlowConditions alertFlowConditions;
 
