@@ -6,66 +6,103 @@
 
 package message;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.DataOutputStream;
 import java.util.List;
 
 import agent.Device;
+import taskContents.LinkMetric;
+import taskContents.LocalMetric;
 
 public class Task extends Data {
     private String id; 
-    private String frequency;
-    private String[] metrics;
-    private List<Device> devices;
+    private int frequency;
+    private int numLinkMetrics;
+    private int numLocalMetrics;
+    private List<LinkMetric> linkMetrics;
+    private List<LocalMetric> localMetrics;
 
-    public Task(String DataID, String type, String description, String value, String timestamp, String frequency, String[] metrics, List<Device> devices, String TaskID) {
-        super(DataID, type, description, value, timestamp);
+    public Task(String timestamp, String id, int frequency, List<LocalMetric> localMetrics, List<LinkMetric> linkMetrics) {
+        //super(timestamp);
+        this.id = id;
         this.frequency = frequency;
-        this.metrics = metrics;
-        this.devices = devices;
-        this.id = TaskID;
-    }
+        if (localMetrics != null) {
+            this.numLinkMetrics = linkMetrics.size();
+        }
+        else {
+            this.numLinkMetrics = 0;
+        }
 
-    public String getFrequency() {
-        return frequency;
-    }
+        if (linkMetrics != null) {
+            this.numLocalMetrics = localMetrics.size();
+        }
+        else {
+            this.numLocalMetrics = 0;
+        }
 
-    public String[] getMetrics() {
-        return metrics;
-    }
-
-    public void setFrequency(String frequency) {
-        this.frequency = frequency;
-    }
-
-    public void setMetrics(String[] metrics) {
-        this.metrics = metrics;
-    }
-
-    public List<Device> getDevices() {
-        return devices;
-    }
-
-    public void setDevices(List<Device> devices) {
-        this.devices = devices;
+        this.localMetrics = localMetrics;
+        this.linkMetrics = linkMetrics;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    @Override
+    public byte[] getPayload() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            DataOutputStream dos = new DataOutputStream(out);
+            //dos.writeChars(super.getTimestamp());
+            dos.writeChars(this.id);
+            dos.writeInt(this.frequency);
+            dos.writeInt(this.numLinkMetrics);
+            dos.writeInt(this.numLocalMetrics);
+            if(this.numLinkMetrics > 0) {
+                for (LinkMetric lm : this.linkMetrics) {
+                    byte[] data = lm.getPayload();
+                    dos.write(data, 0, data.length);
+                }
+            }
+            if(this.numLocalMetrics > 0) {
+                for (LocalMetric lm : this.localMetrics) {
+                    byte[] data = lm.getPayload();
+                    dos.write(data, 0, data.length);
+                }
+            }
+            dos.flush();
+        } catch (IOException e) {
+            System.out.println("Erro ao serializar objeto");
+        }
+
+        return out.toByteArray();
     }
 
     @Override
     public String toString() {
+        String linkMetricsStr = "";
+        String localMetricsStr = "";
+
+        for(LinkMetric lm : this.linkMetrics) {
+            linkMetricsStr += lm.toString();
+            linkMetricsStr += " ";
+        }
+
+        for(LocalMetric lm : this.localMetrics) {
+            localMetricsStr += lm.toString();
+            localMetricsStr += " ";
+        }
+
         return "Task{" +
+                //"timestamp='" + super.getTimestamp() + '\'' +
                 "id='" + getId() + '\'' +
-                ", type='" + getType() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", value='" + getValue() + '\'' +
-                ", timestamp='" + getTimestamp() + '\'' +
                 ", frequency='" + frequency + '\'' +
-                ", metrics=" + metrics +
+                ", numLinkMetrics=" + numLinkMetrics +
+                ", numLocalMetrics=" + numLocalMetrics +
+                ", LinkMetrics=" + linkMetricsStr +
+                ", localMetrics=" + localMetricsStr +
                 '}';
     }
 }

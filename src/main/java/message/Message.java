@@ -1,52 +1,43 @@
 package message;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.DataOutputStream;
 import java.net.InetAddress;
 
 public class Message {
-    private InetAddress source;
-    private InetAddress destination;
     private int seqNumber;
     private int ackNumber;
     private MessageType type;
-    private String data;
+    private Data data;
 
-    public Message(int seqNumber, int ackNumber, String msgData, MessageType type) {
+    public Message(int seqNumber, int ackNumber, MessageType type, Data msgData) {
         this.seqNumber = seqNumber;
         this.ackNumber = ackNumber;
-        this.data = msgData;
         this.type = type;
+        this.data = msgData;
     }
 
-    public InetAddress getSource() {
-        return source;
-    }
+    //TODO construtor byte -> mensagem
 
-    public void setSource(InetAddress source) {
-        this.source = source;
-    }
+    public byte[] getPDU(){
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    public InetAddress getDestination() {
-        return destination;
-    }
+        try {
+            DataOutputStream os = new DataOutputStream(out);
+            os.writeInt(this.seqNumber);
+            os.writeInt(this.ackNumber);
+            os.writeInt(this.type.toInteger());
+            if(data != null) {
+                byte[] payload = data.getPayload();
+                os.write(payload, 0, payload.length);
+            }
+            os.flush();
+        } catch (IOException e) {
+            System.out.println("Erro ao serializar objeto");
+        }
 
-    public void setDestination(InetAddress destination) {
-        this.destination = destination;
-    }
-
-    public int getSeqNumber() {
-        return seqNumber;
-    }
-
-    public int getAckNumber() {
-        return ackNumber;
-    }
-
-    public String getMsgData() {
-        return data;
-    }
-
-    public MessageType getType() {
-        return type;
+        return out.toByteArray();
     }
 
     @Override
@@ -54,8 +45,8 @@ public class Message {
         return "Message{" +
                 "seqNumber=" + seqNumber +
                 ", ackNumber=" + ackNumber +
-                ", msgData=" + data +
                 ", type=" + type +
+                ", msgData=" + data.toString() +
                 '}';
     }
 }

@@ -1,5 +1,12 @@
 package message;
 
+import taskContents.LinkMetric;
+import taskContents.LocalMetric;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.DataOutputStream;
+
 public class TaskResult extends Data {
     private String taskId;
     private boolean success;
@@ -36,5 +43,21 @@ public class TaskResult extends Data {
 
     public void setResultData(String resultData) {
         this.resultData = resultData;
+    }
+
+    @Override
+    public byte[] getPayload() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            DataOutputStream dos = new DataOutputStream(out);
+            dos.writeChars(super.getTimestamp());
+
+            dos.flush();
+        } catch (IOException e) {
+            System.out.println("Erro ao serializar objeto");
+        }
+
+        return out.toByteArray();
     }
 }

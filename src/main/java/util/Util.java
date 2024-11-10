@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.DataOutputStream;
 
 import message.Message;
 
@@ -17,7 +17,7 @@ public class Util{
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         
         try {
-            ObjectOutputStream os = new ObjectOutputStream(out);
+            DataOutputStream dos = new DataOutputStream(out);
             os.writeObject(msg);
             os.flush();
         } catch (IOException e) {
