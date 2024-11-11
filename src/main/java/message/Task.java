@@ -6,14 +6,10 @@
 
 package message;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import agent.Device;
-import taskContents.LinkMetric;
-import taskContents.LocalMetric;
+import taskContents.*;
 
 public class Task extends Data {
     private String id; 
@@ -34,7 +30,7 @@ public class Task extends Data {
             this.numLinkMetrics = 0;
         }
 
-        if (linkMetrics != null) {
+        if (localMetrics != null) {
             this.numLocalMetrics = localMetrics.size();
         }
         else {
@@ -45,34 +41,66 @@ public class Task extends Data {
         this.linkMetrics = linkMetrics;
     }
 
-    public Task(){
-        this.id = "";
-        this.frequency = 0;
-        this.numLinkMetrics = 0;
-        this.numLocalMetrics = 0;
-        this.linkMetrics = null;
-        this.localMetrics = null;
+    public Task(String[] fields, int startIndex){
+        this.id = fields[startIndex++];
+        this.frequency = Integer.parseInt(fields[startIndex++]);
+        this.numLinkMetrics = Integer.parseInt(fields[startIndex++]);
+        this.numLocalMetrics = Integer.parseInt(fields[startIndex++]);
+
+        if(numLinkMetrics > 0){
+            this.linkMetrics = new ArrayList<>(this.numLinkMetrics);
+
+            for(int i = 0; i < numLinkMetrics; i++){
+                MetricName name = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
+                String destination = fields[startIndex++];
+
+                if(name == MetricName.LATENCY) {
+                    int frequency = Integer.parseInt(fields[startIndex++]);
+                    int packageQuantity = Integer.parseInt(fields[startIndex++]);
+                    Latency latency = new Latency(name, destination, frequency, packageQuantity);
+                    this.linkMetrics.add(latency);
+                }
+                else{
+                    char role = fields[startIndex++].charAt(0);
+                    int duration = Integer.parseInt(fields[startIndex++]);
+                    String protocol = fields[startIndex++];
+                    IperfMetric iperfMetric = new IperfMetric(name, destination, role, duration, protocol);
+                    this.linkMetrics.add(iperfMetric);
+                }
+            }
+        }
+        else{
+            this.linkMetrics = null;
+        }
+
+        if(numLocalMetrics > 0){
+            this.localMetrics = new ArrayList<>(this.numLocalMetrics);
+
+            for(int i = 0; i < numLocalMetrics; i++){
+                MetricName name = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
+                int nInterfaces = Integer.parseInt(fields[startIndex++]);
+                List<String> interfaces;
+                if(nInterfaces > 0){
+                    interfaces = new ArrayList<>(nInterfaces);
+                    for(int j = 0; j < nInterfaces; j++){
+                        interfaces.add(fields[startIndex++]);
+                    }
+                }
+                else{
+                    interfaces = null;
+                }
+
+                LocalMetric localMetric = new LocalMetric(name, interfaces);
+                this.localMetrics.add(localMetric);
+            }
+        }
+        else{
+            this.localMetrics = null;
+        }
     }
 
     public String getId() {
         return id;
-    }
-
-    @Override
-    public Data rebuild(byte[] data) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(serializedMessage);
-        try{
-            DataInputStream dis = new DataInputStream(bais);
-            byte[] stringId = new byte[ID_SIZE];
-            dis.readFully(stringId);
-            this.id = new String(stringId, StandardCharsets.UTF_16LE);
-            this.frequency = dis.readInt();
-            this.numLinkMetrics = dis.readInt();
-            this.numLocalMetrics = dis.readInt();
-
-        } catch (IOException e) {
-            System.out.println("Mensagem no formato errado");
-        }
     }
 
     @Override

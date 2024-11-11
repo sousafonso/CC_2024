@@ -1,7 +1,5 @@
 package message;
 
-import java.io.*;
-
 public class Message {
     private int seqNumber;
     private int ackNumber;
@@ -15,33 +13,24 @@ public class Message {
         this.data = msgData;
     }
 
-    public Message(Message msg) {
-        this.seqNumber = msg.seqNumber;
-        this.ackNumber = msg.ackNumber;
-        this.type = msg.type;
-        this.data = msg.data;
+    public Message(String[] fields) {
+        this.seqNumber = Integer.parseInt(fields[0]);
+        this.ackNumber = Integer.parseInt(fields[1]);
+        this.type = MessageType.fromInteger(Integer.parseInt(fields[2]));
 
-    }
-
-    //TODO construtor byte -> mensagem
-
-    public Message(byte[] serializedMessage) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(serializedMessage);
-        try{
-            DataInputStream dis = new DataInputStream(bais);
-            this.seqNumber = dis.readInt();
-            this.ackNumber = dis.readInt();
-            this.type = MessageType.fromInteger(dis.readInt());
-            byte[] dataBytes = new byte[dis.available()];
-            dis.read(dataBytes);
-            switch(type){
-                case Task:
-                    Task task = new Task();
-                    this.data = task.rebuild(dataBytes);
-                    break;
-            }
-        } catch (IOException e) {
-            System.out.println("Mensagem no formato errado");
+        switch(this.type){
+            case Task:
+                this.data = new Task(fields, 3);
+                break;
+            case TaskResult:
+                //TODO
+                break;
+            case Notification:
+                this.data = new Notification(fields, 3);
+                break;
+            default:
+                data = null;
+                break;
         }
     }
 

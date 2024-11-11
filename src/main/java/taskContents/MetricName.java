@@ -8,7 +8,7 @@ public enum MetricName {
     RAM_USAGE,
     INTERFACE_STATS;
 
-    public MetricName fromInteger(int x){
+    public static MetricName fromInteger(int x){
         return switch (x) {
             case 0 -> LATENCY;
             case 1 -> PACKET_LOSS;
