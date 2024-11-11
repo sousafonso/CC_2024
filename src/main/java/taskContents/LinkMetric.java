@@ -17,5 +17,5 @@ public abstract class LinkMetric {
         return destination;
     }
 
-    public abstract byte[] getPayload();
+    public abstract String getPayload();
 }

@@ -1,9 +1,5 @@
 package taskContents;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
-
 public class IperfMetric extends LinkMetric{
     private char role;
     private int duration;
@@ -16,22 +12,12 @@ public class IperfMetric extends LinkMetric{
         this.protocol = protocol;
     }
 
-    public byte[] getPayload() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(super.getMetricName().toInteger());
-            dos.writeChar(this.role);
-            dos.writeInt(this.duration);
-            dos.writeChars(this.protocol);
-            dos.writeChars(super.getDestination());
-            dos.flush();
-        } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
-        }
-
-        return out.toByteArray();
+    public String getPayload() {
+        return super.getMetricName().toInteger() + ";" +
+                super.getDestination() + ";" +
+                role + ";" +
+                duration  + ";" +
+                protocol;
     }
 
     public String toString() {

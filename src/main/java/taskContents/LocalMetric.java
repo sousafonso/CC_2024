@@ -1,8 +1,5 @@
 package taskContents;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
 import java.util.List;
 
 public class LocalMetric {
@@ -21,24 +18,17 @@ public class LocalMetric {
         this.interfaces = interfaces;
     }
 
-    public byte[] getPayload(){
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    public String getPayload(){
+        String s = metricName.toInteger() + ";" +
+                numInterfaces;
 
-        try {
-            DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(this.metricName.toInteger());
-            dos.writeInt(this.numInterfaces);
-            if(this.numInterfaces > 0) {
-                for (String i : this.interfaces) {
-                    dos.writeChars(i);
-                }
+        if(numInterfaces > 0){
+            for (String i : interfaces) {
+                s += ";" + i;
             }
-            dos.flush();
-        } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
         }
 
-        return out.toByteArray();
+        return s;
     }
 
      public String toString(){

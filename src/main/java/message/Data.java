@@ -20,6 +20,7 @@ public abstract class Data {
         return timestamp;
     }*/
 
-    public abstract byte[] getPayload();
+    public abstract Data rebuild(byte[] payload);
 
+    public abstract String getPayload();
 }

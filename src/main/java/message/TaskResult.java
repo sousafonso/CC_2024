@@ -46,18 +46,9 @@ public class TaskResult extends Data {
     }
 
     @Override
-    public byte[] getPayload() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    public String getPayload() {
+        String s = "";
 
-        try {
-            DataOutputStream dos = new DataOutputStream(out);
-            dos.writeChars(super.getTimestamp());
-
-            dos.flush();
-        } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
-        }
-
-        return out.toByteArray();
+        return s;
     }
 }

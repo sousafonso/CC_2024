@@ -6,9 +6,9 @@
 
 package message;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import agent.Device;
@@ -45,39 +45,55 @@ public class Task extends Data {
         this.linkMetrics = linkMetrics;
     }
 
+    public Task(){
+        this.id = "";
+        this.frequency = 0;
+        this.numLinkMetrics = 0;
+        this.numLocalMetrics = 0;
+        this.linkMetrics = null;
+        this.localMetrics = null;
+    }
+
     public String getId() {
         return id;
     }
 
     @Override
-    public byte[] getPayload() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    public Data rebuild(byte[] data) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(serializedMessage);
+        try{
+            DataInputStream dis = new DataInputStream(bais);
+            byte[] stringId = new byte[ID_SIZE];
+            dis.readFully(stringId);
+            this.id = new String(stringId, StandardCharsets.UTF_16LE);
+            this.frequency = dis.readInt();
+            this.numLinkMetrics = dis.readInt();
+            this.numLocalMetrics = dis.readInt();
 
-        try {
-            DataOutputStream dos = new DataOutputStream(out);
-            //dos.writeChars(super.getTimestamp());
-            dos.writeChars(this.id);
-            dos.writeInt(this.frequency);
-            dos.writeInt(this.numLinkMetrics);
-            dos.writeInt(this.numLocalMetrics);
-            if(this.numLinkMetrics > 0) {
-                for (LinkMetric lm : this.linkMetrics) {
-                    byte[] data = lm.getPayload();
-                    dos.write(data, 0, data.length);
-                }
-            }
-            if(this.numLocalMetrics > 0) {
-                for (LocalMetric lm : this.localMetrics) {
-                    byte[] data = lm.getPayload();
-                    dos.write(data, 0, data.length);
-                }
-            }
-            dos.flush();
         } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
+            System.out.println("Mensagem no formato errado");
+        }
+    }
+
+    @Override
+    public String getPayload() {
+        StringBuilder s = new StringBuilder(id + ";" +
+                frequency + ";" +
+                numLinkMetrics + ";" +
+                numLocalMetrics);
+
+        if(this.numLinkMetrics > 0) {
+            for (LinkMetric lm : this.linkMetrics) {
+                s.append(";").append(lm.getPayload());
+            }
+        }
+        if(this.numLocalMetrics > 0) {
+            for (LocalMetric lm : this.localMetrics) {
+                s.append(";").append(lm.getPayload());
+            }
         }
 
-        return out.toByteArray();
+        return s.toString();
     }
 
     @Override

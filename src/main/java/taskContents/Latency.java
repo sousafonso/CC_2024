@@ -1,9 +1,5 @@
 package taskContents;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
-
 public class Latency extends LinkMetric{
     private int frequency;
     private int packageQuantity;
@@ -15,21 +11,11 @@ public class Latency extends LinkMetric{
     }
 
     @Override
-    public byte[] getPayload() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(super.getMetricName().toInteger());
-            dos.writeInt(this.frequency);
-            dos.writeInt(this.packageQuantity);
-            dos.writeChars(super.getDestination());
-            dos.flush();
-        } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
-        }
-
-        return out.toByteArray();
+    public String getPayload() {
+        return super.getMetricName().toInteger() + ";" +
+                super.getDestination() + ";" +
+                frequency + ";" +
+                packageQuantity;
     }
 
     public String toString(){

@@ -1,9 +1,6 @@
 package message;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
-import java.net.InetAddress;
+import java.io.*;
 
 public class Message {
     private int seqNumber;
@@ -18,26 +15,44 @@ public class Message {
         this.data = msgData;
     }
 
+    public Message(Message msg) {
+        this.seqNumber = msg.seqNumber;
+        this.ackNumber = msg.ackNumber;
+        this.type = msg.type;
+        this.data = msg.data;
+
+    }
+
     //TODO construtor byte -> mensagem
 
-    public byte[] getPDU(){
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            DataOutputStream os = new DataOutputStream(out);
-            os.writeInt(this.seqNumber);
-            os.writeInt(this.ackNumber);
-            os.writeInt(this.type.toInteger());
-            if(data != null) {
-                byte[] payload = data.getPayload();
-                os.write(payload, 0, payload.length);
+    public Message(byte[] serializedMessage) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(serializedMessage);
+        try{
+            DataInputStream dis = new DataInputStream(bais);
+            this.seqNumber = dis.readInt();
+            this.ackNumber = dis.readInt();
+            this.type = MessageType.fromInteger(dis.readInt());
+            byte[] dataBytes = new byte[dis.available()];
+            dis.read(dataBytes);
+            switch(type){
+                case Task:
+                    Task task = new Task();
+                    this.data = task.rebuild(dataBytes);
+                    break;
             }
-            os.flush();
         } catch (IOException e) {
-            System.out.println("Erro ao serializar objeto");
+            System.out.println("Mensagem no formato errado");
         }
+    }
 
-        return out.toByteArray();
+    public String getPDU(){
+        return seqNumber +
+                ';' +
+                ackNumber +
+                ';' +
+                type.toInteger() +
+                ';' +
+                data.getPayload();
     }
 
     @Override
