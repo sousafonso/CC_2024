@@ -32,7 +32,8 @@ public class NMS_Server {
 
     public void initialize() {
         System.out.println("A iniciar servidor");
-        
+        //TODO ler json e ter as tarefas todas organizadas (falta classe que representa uma Task para o servidor com os devices)
+
         // Carregar tarefas do JSON de configuração
         //List<Task> tasks = taskReader.readConfigFile("config/config.json");
 
@@ -43,12 +44,14 @@ public class NMS_Server {
         NetTaskListener.start();
         //AlertFlowListener.start();
 
-        try {
+        //TODO apresentação de métricas na UI
+
+        /*try {
             NetTaskListener.join();
             //AlertFlowListener.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
 
         // Iniciar exibição periódica de métricas a cada 10 segundos
         //startMetricDisplayScheduler();

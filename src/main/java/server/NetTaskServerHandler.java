@@ -16,7 +16,6 @@ import java.net.DatagramSocket;
 
 import message.Message;
 import message.MessageType;
-import util.Util;
 
 public class NetTaskServerHandler implements Runnable {
     private DatagramPacket packet;
@@ -30,7 +29,7 @@ public class NetTaskServerHandler implements Runnable {
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket();
-            byte[] buffer = Util.serialize(msg);
+            byte[] buffer = msg.getPDU().getBytes();
             
             DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
             socket.send(sendPacket);
@@ -46,8 +45,14 @@ public class NetTaskServerHandler implements Runnable {
 
     // Processa a mensagem recebida e executa a ação correspondente
     private void processRegister(Message msg){
+        /*
+        TODO decidir o que fazer
+         - mandar logo tarefa aso agent
+         - memorizar que agent está registado e depois mandar tarefa
+         - server só manda tarefa quando agent pede (novo tipo de mensagem)*/
+
         System.out.println(msg.toString());
-        Message reply = new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), "tarefa:5 flexoes", MessageType.Task);
+        Message reply = new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null);
         sendReply(reply);
     }
 
@@ -61,7 +66,7 @@ public class NetTaskServerHandler implements Runnable {
 
     @Override
     public void run() {
-        Message msg = Util.deserialize(packet.getData());
+        Message msg = new Message((new String(packet.getData())).split(";"));
         
         if(msg == null){
             System.out.println("Processamento da mensagem falhou");

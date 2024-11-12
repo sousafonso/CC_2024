@@ -1,23 +1,24 @@
 package message;
 
-import taskContents.LinkMetric;
-import taskContents.LocalMetric;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.DataOutputStream;
+import taskContents.MetricName;
 
 public class TaskResult extends Data {
     private String taskId;
-    private boolean success;
-    private String resultData;
+    private MetricName metricName;
+    private String result;
 
     // Construtor
-    public TaskResult(String taskId, boolean success, String resultData, String DataID, String type, String description, String value, String timestamp) {
-        super(DataID, type, description, value, timestamp);
+    public TaskResult(String taskId, MetricName metricName, String result) {
+        //super(timestamp);
         this.taskId = taskId;
-        this.success = success;
-        this.resultData = resultData;
+        this.metricName = metricName;
+        this.result = result;
+    }
+
+    public TaskResult(String[] fields, int startIndex) {
+        this.taskId = fields[startIndex++];
+        this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
+        this.result = fields[startIndex];
     }
 
     // Getters e Setters
@@ -25,29 +26,31 @@ public class TaskResult extends Data {
         return taskId;
     }
 
+    public MetricName getMetricName() {
+        return metricName;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
     public void setTaskId(String taskId) {
         this.taskId = taskId;
     }
 
-    public boolean isSuccess() {
-        return success;
+    public void setMetricName(MetricName metricName) {
+        this.metricName = metricName;
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getResultData() {
-        return resultData;
-    }
-
-    public void setResultData(String resultData) {
-        this.resultData = resultData;
+    public void setResult(String result) {
+        this.result = result;
     }
 
     @Override
     public String getPayload() {
-        String s = "";
+        String s = taskId + ";" +
+                metricName.toInteger() + ";"
+                + result;
 
         return s;
     }

@@ -5,12 +5,7 @@
 package message;
 
 public abstract class Data {
-    //private String id;
-    //private String type;
-    //private String description;
-    //private String value;
     //private String timestamp;
-    //private int size;
 
     /*public Data(String timestamp) {
         this.timestamp = timestamp;

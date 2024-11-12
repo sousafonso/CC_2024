@@ -23,7 +23,7 @@ public class Message {
                 this.data = new Task(fields, 3);
                 break;
             case TaskResult:
-                //TODO
+                this.data = new TaskResult(fields, 3);
                 break;
             case Notification:
                 this.data = new Notification(fields, 3);
@@ -32,6 +32,18 @@ public class Message {
                 data = null;
                 break;
         }
+    }
+
+    public int getSeqNumber() {
+        return seqNumber;
+    }
+
+    public int getAckNumber() {
+        return ackNumber;
+    }
+
+    public MessageType getType() {
+        return type;
     }
 
     public String getPDU(){

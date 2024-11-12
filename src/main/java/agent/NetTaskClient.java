@@ -13,8 +13,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import message.*;
-import util.Util;
 
+//TODO rever se é necessário esta classe para uma thread ou se pode ficar no NMS_Agent
 public class NetTaskClient implements Runnable {
     private final int UDP_PORT = 7777;
     private InetAddress serverIp;
@@ -30,17 +30,17 @@ public class NetTaskClient implements Runnable {
         DatagramSocket socket = null;
         try{
             socket = new DatagramSocket(UDP_PORT);
-            byte[] byteMsg = Util.serialize(new Message(1, 0, "registo", MessageType.Regist));
+            byte[] byteMsg = (new Message(1, 0, MessageType.Regist, null)).getPDU().getBytes();
             DatagramPacket registerPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIp, serverPort);
             socket.send(registerPacket);
 
             byte[] receiveMsg = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
             socket.receive(receivePacket);
-            Message msg = Util.deserialize(receiveMsg);
+            Message msg = new Message((new String(receiveMsg)).split(";"));
             if(msg.getType() == MessageType.Task) {
                 System.out.println(msg.toString());
-                // processar tarefa
+                // TODO processar tarefa
             }
         }
         catch(SocketException e){

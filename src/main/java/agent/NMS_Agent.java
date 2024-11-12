@@ -39,7 +39,7 @@ public class NMS_Agent {
     }
 
     public static void main(String[] args) {
-        NMS_Agent agent = new NMS_Agent("agent1"); //TODO ver como distinguir e atribuir o id/ip certo ao agent
+        NMS_Agent agent = new NMS_Agent(args[0]);
         agent.start();
     }
 
