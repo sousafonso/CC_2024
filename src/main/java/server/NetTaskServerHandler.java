@@ -25,22 +25,39 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
-    private void sendReply(Message msg){
+    // private void sendReply(Message msg){
+    //     DatagramSocket socket = null;
+    //     try {
+    //         socket = new DatagramSocket();
+    //         byte[] buffer = msg.getPDU().getBytes();
+            
+    //         DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
+    //         socket.send(sendPacket);
+    //     } catch (IOException e) {
+    //         System.out.println("Erro ao enviar resposta");
+    //         e.printStackTrace();
+    //     } finally {
+    //         if(socket != null && !socket.isClosed()) {
+    //             socket.close();
+    //         }
+    //     }   
+    // }
+
+    private void sendReply(Message msg) {
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket();
-            byte[] buffer = msg.getPDU().getBytes();
-            
+            byte[] buffer = msg.getPDU();
             DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
             socket.send(sendPacket);
         } catch (IOException e) {
             System.out.println("Erro ao enviar resposta");
             e.printStackTrace();
         } finally {
-            if(socket != null && !socket.isClosed()) {
+            if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-        }   
+        }
     }
 
     // Processa a mensagem recebida e executa a ação correspondente
@@ -57,6 +74,7 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     private void processTaskResult(Message msg){
+        System.out.println("Task Result Received: " + msg.toString());
         //TODO Guardar resultado da tarefa ?
     }
 
@@ -65,19 +83,42 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     @Override
+    // public void run() {
+    //     Message msg = new Message((new String(packet.getData())).split(";"));
+        
+    //     if(msg == null){
+    //         System.out.println("Processamento da mensagem falhou");
+    //         return;
+    //     }
+
+    //     switch (msg.getType()) {
+    //         case Regist -> processRegister(msg);
+    //         case TaskResult -> processTaskResult(msg);
+    //         case Ack -> processAck(msg);
+    //         default -> System.out.println("Tipo de mensagem não reconhecido");
+    //     }
+    // }
+
     public void run() {
         Message msg = new Message((new String(packet.getData())).split(";"));
-        
-        if(msg == null){
+        if (msg == null) {
             System.out.println("Processamento da mensagem falhou");
             return;
         }
 
         switch (msg.getType()) {
-            case Regist -> processRegister(msg);
-            case TaskResult -> processTaskResult(msg);
-            case Ack -> processAck(msg);
-            default -> System.out.println("Tipo de mensagem não reconhecido");
+            case Regist:
+                processRegister(msg);
+                break;
+            case TaskResult:
+                processTaskResult(msg);
+                break;
+            case Ack:
+                processAck(msg);
+                break;
+            default:
+                System.out.println("Tipo de mensagem desconhecido");
+                break;
         }
     }
 }

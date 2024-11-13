@@ -1,3 +1,7 @@
+/**
+ *  CLASSE NAO UTILIZADA
+ */
+
 package agent;
 
 public class LinkMetrics {

@@ -1,8 +1,8 @@
 package taskContents;
 
 public abstract class LinkMetric {
-    private MetricName metricName;
-    private String destination;
+    private MetricName metricName; // nome da métrica 
+    private String destination; // destino da métrica
 
     public LinkMetric(MetricName metricName, String destination) {
         this.metricName = metricName;

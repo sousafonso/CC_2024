@@ -1,9 +1,17 @@
+/**
+ * LocalMetric.java
+ * @description: Classe que representa uma métrica local, contendo o nome da métrica, o número de interfaces e a lista de interfaces.
+ * @responsibility:
+ * Armazenar o nome da métrica, o número de interfaces e a lista de interfaces.
+ * Gerar uma string com o conteúdo da métrica.
+ */
+
 package taskContents;
 
 import java.util.List;
 
 public class LocalMetric {
-    private MetricName metricName;
+    private MetricName metricName; 
     private int numInterfaces;
     private List<String> interfaces;
 

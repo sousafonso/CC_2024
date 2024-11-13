@@ -20,9 +20,9 @@ public class NMS_Agent {
     private InetAddress serverIP;
 
     private String agentId;
-    /*private MetricCollector metricCollector;
+    private MetricCollector metricCollector;
+    private AlertFlowClient alertFlowClient;
     private NetTaskClient netTaskClient;
-    private AlertFlowClient alertFlowClient;*/
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
@@ -33,9 +33,15 @@ public class NMS_Agent {
         }
     }
 
+    // private void start() {
+    //     Thread NetTaskClient = new Thread(new NetTaskClient(serverIP, SERVER_UDP_PORT));
+    //     NetTaskClient.start();
+    // }
+
     private void start() {
-        Thread NetTaskClient = new Thread(new NetTaskClient(serverIP, SERVER_UDP_PORT));
-        NetTaskClient.start();
+        netTaskClient = new NetTaskClient(serverIP, SERVER_UDP_PORT);
+        new Thread(netTaskClient).start();
+        startMetricCollection();
     }
 
     public static void main(String[] args) {
@@ -54,10 +60,11 @@ public class NMS_Agent {
         new Thread(() -> {
             while (true) {
                 try {
-                    Data metricData = metricCollector.collectPing("8.8.8.8"); // Exemplo de recolha de ping
-                    TaskResult result = new TaskResult(agentId, true, metricData.getValue().toString());
-                    netTaskClient.sendTaskResult(result);
-                    Thread.sleep(5000); // Recolha a cada 5 segundos
+                    Data metricData = metricCollector.collectPing("8.8.8.8"); // Exemplo de coleta de ping
+                    TaskResult result = new TaskResult(agentId, MetricName.LATENCY, metricData.getPayload());
+                    Message message = new Message(1, 0, MessageType.TaskResult, result);
+                    netTaskClient.sendMessage(message);
+                    Thread.sleep(5000); // Coleta a cada 5 segundos
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

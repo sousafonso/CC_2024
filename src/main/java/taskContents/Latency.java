@@ -1,8 +1,8 @@
 package taskContents;
 
 public class Latency extends LinkMetric{
-    private int frequency;
-    private int packageQuantity;
+    private int frequency; // frequencia de envio de pacotes
+    private int packageQuantity; // quantidade de pacotes enviados
 
     public Latency(MetricName name, String destination, int frequency, int packageQuantity) {
         super(name, destination);
