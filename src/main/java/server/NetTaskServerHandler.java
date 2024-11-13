@@ -44,19 +44,13 @@ public class NetTaskServerHandler implements Runnable {
     // }
 
     private void sendReply(Message msg) {
-        DatagramSocket socket = null;
-        try {
-            socket = new DatagramSocket();
+        try (DatagramSocket socket = new DatagramSocket()) {
             byte[] buffer = msg.getPDU();
-            DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
+            DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
             socket.send(sendPacket);
         } catch (IOException e) {
             System.out.println("Erro ao enviar resposta");
             e.printStackTrace();
-        } finally {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
         }
     }
 

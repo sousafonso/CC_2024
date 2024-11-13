@@ -13,19 +13,34 @@ package agent;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import message.Message;
+import message.MessageType;
+import message.TaskResult;
+import taskContents.MetricName;
+
 public class NMS_Agent {
     private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
-    private final int SERVER_TCP_PORT = 6000;
+    // private final int SERVER_TCP_PORT = 6000;
     private InetAddress serverIP;
 
     private String agentId;
     private MetricCollector metricCollector;
-    private AlertFlowClient alertFlowClient;
+    // private AlertFlowClient alertFlowClient;
     private NetTaskClient netTaskClient;
+
+    // public NMS_Agent(String agentId) {
+    //     this.agentId = agentId;
+    //     try {
+    //         this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
+    //     } catch (UnknownHostException e) {
+    //         System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
+    //     }
+    // }
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
+        this.metricCollector = new MetricCollector();
         try {
             this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
         } catch (UnknownHostException e) {
@@ -42,6 +57,22 @@ public class NMS_Agent {
         netTaskClient = new NetTaskClient(serverIP, SERVER_UDP_PORT);
         new Thread(netTaskClient).start();
         startMetricCollection();
+    }
+
+    private void startMetricCollection() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Data metricData = metricCollector.collectPing("8.8.8.8"); // Exemplo de coleta de ping
+                    TaskResult result = new TaskResult(agentId, MetricName.LATENCY, metricData.getPayload());
+                    Message message = new Message(1, 0, MessageType.TaskResult, result);
+                    netTaskClient.sendMessage(message);
+                    Thread.sleep(5000); // Coleta a cada 5 segundos
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public static void main(String[] args) {
