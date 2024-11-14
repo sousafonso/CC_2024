@@ -7,7 +7,7 @@ public enum MessageType {
     Ack;
     // TODO fim de conexão ?
 
-    public static MessageType fromInteger(int x) {
+    public static MessageType fromByte(byte x) {
         return switch (x) {
             case 0 -> Regist;
             case 1 -> Task;
@@ -18,7 +18,7 @@ public enum MessageType {
         };
     }
 
-    public int toInteger() {
+    public byte toByte() {
         return switch (this) {
             case Regist -> 0;
             case Task -> 1;
