@@ -25,35 +25,24 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
-    // private void sendReply(Message msg){
-    //     DatagramSocket socket = null;
-    //     try {
-    //         socket = new DatagramSocket();
-    //         byte[] buffer = msg.getPDU().getBytes();
-            
-    //         DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
-    //         socket.send(sendPacket);
-    //     } catch (IOException e) {
-    //         System.out.println("Erro ao enviar resposta");
-    //         e.printStackTrace();
-    //     } finally {
-    //         if(socket != null && !socket.isClosed()) {
-    //             socket.close();
-    //         }
-    //     }   
-    // }
+    private void sendReply(Message msg){
+        DatagramSocket socket = null;
+            try {
+                 socket = new DatagramSocket();
+                 byte[] buffer = msg.getPDU();
 
-    private void sendReply(Message msg) {
-        try (DatagramSocket socket = new DatagramSocket()) {
-            byte[] buffer = msg.getPDU();
-            DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
-            socket.send(sendPacket);
-        } catch (IOException e) {
-            System.out.println("Erro ao enviar resposta");
-            e.printStackTrace();
-        }
+                 DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
+                 socket.send(sendPacket);
+            } catch (IOException e) {
+                 System.out.println("Erro ao enviar resposta");
+                 e.printStackTrace();
+            } finally {
+                 if(socket != null && !socket.isClosed()) {
+                     socket.close();
+                 }
+            }
     }
-
+    
     // Processa a mensagem recebida e executa a ação correspondente
     private void processRegister(Message msg){
         /*
@@ -94,7 +83,7 @@ public class NetTaskServerHandler implements Runnable {
     // }
 
     public void run() {
-        Message msg = new Message((new String(packet.getData())).split(";"));
+        Message msg = new Message(packet.getData());
         if (msg == null) {
             System.out.println("Processamento da mensagem falhou");
             return;
