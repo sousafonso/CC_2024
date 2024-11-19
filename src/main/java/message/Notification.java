@@ -1,73 +1,37 @@
 package message;
 
 public class Notification extends Data {
-    private int cpuUsage;
-    private int ramUsage;
-    private int interfaceStats; // limite de pacotes opr segundo para as interfaces (limite de 2000 pacotes por segundo, por exemplo)
-    private int packetLoss;
-    private int jitter;
+    private Conditions conditions;
 
     public Notification(int cpuUsage, int ramUsage, int interfaceStats, int packetLoss, int jitter) {
-        this.cpuUsage = cpuUsage;
-        this.ramUsage = ramUsage;
-        this.interfaceStats = interfaceStats;
-        this.packetLoss = packetLoss;
-        this.jitter = jitter;
+        this.conditions = new Conditions(cpuUsage, ramUsage, interfaceStats, packetLoss, jitter);
     }
 
     public Notification(String[] fields, int startIndex){
-        this.cpuUsage = Integer.parseInt(fields[startIndex++]);
-        this.ramUsage = Integer.parseInt(fields[startIndex++]);
-        this.interfaceStats = Integer.parseInt(fields[startIndex++]);
-        this.packetLoss = Integer.parseInt(fields[startIndex++]);
-        this.jitter = Integer.parseInt(fields[startIndex]);
+        this.conditions = new Conditions(fields, startIndex);
     }
 
     public int getCpuUsage() {
-        return cpuUsage;
-    }
-
-    public void setCpuUsage(int cpuUsage) {
-        this.cpuUsage = cpuUsage;
+        return conditions.getCpuUsage();
     }
 
     public int getRamUsage() {
-        return ramUsage;
-    }
-
-    public void setRamUsage(int ramUsage) {
-        this.ramUsage = ramUsage;
+        return conditions.getRamUsage();
     }
 
     public int getInterfaceStats() {
-        return interfaceStats;
-    }
-
-    public void setInterfaceStats(int interfaceStats) {
-        this.interfaceStats = interfaceStats;
+        return conditions.getInterfaceStats();
     }
 
     public int getPacketLoss() {
-        return packetLoss;
-    }
-
-    public void setPacketLoss(int packetLoss) {
-        this.packetLoss = packetLoss;
+        return conditions.getPacketLoss();
     }
 
     public int getJitter() {
-        return jitter;
-    }
-
-    public void setJitter(int jitter) {
-        this.jitter = jitter;
+        return conditions.getJitter();
     }
 
     public String getPayload() {
-        return cpuUsage + ";" +
-                ramUsage + ";" +
-                interfaceStats + ";" +
-                packetLoss + ";" +
-                jitter;
+        return this.conditions.getPayload();
     }
 }

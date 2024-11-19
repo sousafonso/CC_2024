@@ -80,15 +80,15 @@ public class NMS_Agent {
                     // Enviar métricas coletadas
                     TaskResult result = new TaskResult(agentId, MetricName.CPU_USAGE, String.valueOf(cpuUsage));
                     Message message = new Message(1, 0, MessageType.TaskResult, result);
-                    netTaskClient.sendMessage(message);
+                    //netTaskClient.sendMessage(message);
 
                     result = new TaskResult(agentId, MetricName.RAM_USAGE, String.valueOf(ramUsage));
                     message = new Message(1, 0, MessageType.TaskResult, result);
-                    netTaskClient.sendMessage(message);
+                    //netTaskClient.sendMessage(message);
 
                     result = new TaskResult(agentId, MetricName.INTERFACE_STATS, interfaceStats);
                     message = new Message(1, 0, MessageType.TaskResult, result);
-                    netTaskClient.sendMessage(message);
+                    //netTaskClient.sendMessage(message);
 
                     Thread.sleep(5000); // Coleta a cada 5 segundos
                 } catch (InterruptedException e) {

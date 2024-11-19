@@ -30,14 +30,14 @@ public class NetTaskClient implements Runnable {
         DatagramSocket socket = null;
         try{
             socket = new DatagramSocket(UDP_PORT);
-            byte[] byteMsg = (new Message(1, 0, MessageType.Regist, null)).getPDU().getBytes();
+            byte[] byteMsg = (new Message(1, 0, MessageType.Regist, null)).getPDU();
             DatagramPacket registerPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIp, serverPort);
             socket.send(registerPacket);
 
             byte[] receiveMsg = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
             socket.receive(receivePacket);
-            Message msg = new Message((new String(receiveMsg)).split(";"));
+            Message msg = new Message(receivePacket.getData());
             if(msg.getType() == MessageType.Task) {
                 System.out.println(msg.toString());
                 // TODO processar tarefa

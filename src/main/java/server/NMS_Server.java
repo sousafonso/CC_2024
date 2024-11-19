@@ -16,6 +16,7 @@ package server;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import message.*;
 
 public class NMS_Server {
     private final int UDP_PORT = 5000; //TODO talvez mover constantes para a classe NetTaskServerListener
@@ -40,7 +41,7 @@ public class NMS_Server {
 
         // Carregar tarefas do JSON de configuração
         //TODO deixar ip como chave e ser isso o id do device, ou deixar o nome e forncer isso no registo (modificar esse tipo de mensagem)
-        Map<InetAddress, ServerTask> tasks  = new HashMap<>();
+        Map<String, Task> tasks  = this.taskReader.readJson();
 
         // Distribuir tarefas para os agentes
         //distributeTasks(tasks);

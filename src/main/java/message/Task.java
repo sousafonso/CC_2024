@@ -14,6 +14,7 @@ import taskContents.*;
 public class Task extends Data {
     private String id; 
     private int frequency;
+    private Conditions conditions;
     private int numLinkMetrics;
     private int numLocalMetrics;
     private List<LinkMetric> linkMetrics;
@@ -44,6 +45,7 @@ public class Task extends Data {
     public Task(String[] fields, int startIndex){
         this.id = fields[startIndex++];
         this.frequency = Integer.parseInt(fields[startIndex++]);
+        this.conditions = new Conditions(fields, startIndex);
         this.numLinkMetrics = Integer.parseInt(fields[startIndex++]);
         this.numLocalMetrics = Integer.parseInt(fields[startIndex++]);
 
@@ -107,6 +109,7 @@ public class Task extends Data {
     public String getPayload() {
         StringBuilder s = new StringBuilder(id + ";" +
                 frequency + ";" +
+                conditions.getPayload() + ";" +
                 numLinkMetrics + ";" +
                 numLocalMetrics);
 

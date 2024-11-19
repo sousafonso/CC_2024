@@ -33,7 +33,7 @@ public class StorageModule {
     // Exibe todas as métricas e alertas
     public void displayMetrics() {
         System.out.println("----- Métricas -----");
-        taskResults.forEach((k, v) -> System.out.println(k + ": " + v.getResultData()));
+        //taskResults.forEach((k, v) -> System.out.println(k + ": " + v.getResultData()));
         System.out.println("----- Alertas -----");
         //alerts.forEach((k, v) -> System.out.println(k + ": " + v.getMessage()));
     }

@@ -8,19 +8,32 @@
           "device_id": "r1",
           "device_metrics": {
             "cpu_usage": true,
-            "ram_usage": true,
+            "ram_usage": false,
             "interface_stats": ["eth0", "eth1"]
           },
           "link_metrics": {
             "bandwidth": {
               "role": "client",
               "server_address": "192.168.1.2",
-              "duration": 15,
+              "duration": 1,
               "protocol": "TCP"
             },
-            "jitter": 100,
-            "packet_loss": 3,
-            "latency": 50
+            "jitter": {
+              "role": "server",
+              "server_address": "192.168.1.2",
+              "duration": 12,
+              "protocol": "TCP"
+            },
+            "packet_loss":  {
+              "role": "client",
+              "server_address": "192.168.1.2",
+              "duration": 10,
+              "protocol": "TCP"
+            },
+            "latency": {
+              "frequency": 15,
+              "package_count": 10
+            }
           },
           "alertflow_conditions": {
             "cpu_usage": 80,
@@ -35,7 +48,7 @@
           "device_metrics": {
             "cpu_usage": true,
             "ram_usage": false,
-            "interface_stats": ["eth0", "eth1"]
+            "interface_stats": ["eth0"]
           },
           "link_metrics": {
             "bandwidth": {
@@ -44,9 +57,22 @@
               "duration": 20,
               "protocol": "UDP"
             },
-            "jitter": 120,
-            "packet_loss": 2,
-            "latency": 60
+            "jitter": {
+              "role": "server",
+              "server_address": "192.168.1.2",
+              "duration": 12,
+              "protocol": "TCP"
+            },
+            "packet_loss":  {
+              "role": "client",
+              "server_address": "192.168.1.2",
+              "duration": 10,
+              "protocol": "TCP"
+            },
+            "latency": {
+              "frequency": 15,
+              "package_count": 10
+            }
           },
           "alertflow_conditions": {
             "cpu_usage": 75,
@@ -71,21 +97,34 @@
           },
           "link_metrics": {
             "bandwidth": {
+              "role": "server",
+              "server_address": "192.168.1.1",
+              "duration": 20,
+              "protocol": "UDP"
+            },
+            "jitter": {
+              "role": "server",
+              "server_address": "192.168.1.2",
+              "duration": 12,
+              "protocol": "TCP"
+            },
+            "packet_loss":  {
               "role": "client",
-              "server_address": "192.168.1.4",
+              "server_address": "192.168.1.2",
               "duration": 10,
               "protocol": "TCP"
             },
-            "jitter": 90,
-            "packet_loss": 1,
-            "latency": 40
+            "latency": {
+              "frequency": 15,
+              "package_count": 10
+            }
           },
           "alertflow_conditions": {
-            "cpu_usage": 85,
-            "ram_usage": 80,
-            "interface_stats": 1200,
-            "packet_loss": 3,
-            "jitter": 95
+            "cpu_usage": 75,
+            "ram_usage": 90,
+            "interface_stats": 1500,
+            "packet_loss": 4,
+            "jitter": 80
           }
         },
         {
@@ -98,20 +137,33 @@
           "link_metrics": {
             "bandwidth": {
               "role": "server",
-              "server_address": "192.168.1.3",
-              "duration": 25,
+              "server_address": "192.168.1.1",
+              "duration": 20,
               "protocol": "UDP"
             },
-            "jitter": 110,
-            "packet_loss": 2,
-            "latency": 70
+            "jitter": {
+              "role": "server",
+              "server_address": "192.168.1.2",
+              "duration": 12,
+              "protocol": "TCP"
+            },
+            "packet_loss":  {
+              "role": "client",
+              "server_address": "192.168.1.2",
+              "duration": 10,
+              "protocol": "TCP"
+            },
+            "latency": {
+              "frequency": 15,
+              "package_count": 10
+            }
           },
           "alertflow_conditions": {
-            "cpu_usage": 80,
+            "cpu_usage": 75,
             "ram_usage": 90,
-            "interface_stats": 2000,
-            "packet_loss": 5,
-            "jitter": 110
+            "interface_stats": 1500,
+            "packet_loss": 4,
+            "jitter": 80
           }
         }
       ]
