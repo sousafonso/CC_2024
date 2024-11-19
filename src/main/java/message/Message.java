@@ -19,7 +19,7 @@ public class Message {
     public Message(byte[] pdu) {
         ByteBuffer buffer = ByteBuffer.wrap(pdu);
         this.seqNumber = buffer.getInt();
-        this.seqNumber = buffer.getInt();
+        this.ackNumber = buffer.getInt();
         this.type = MessageType.fromByte(buffer.get());
         byte[] dataBytes = new byte[buffer.remaining()];
         buffer.get(dataBytes);
