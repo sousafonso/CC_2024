@@ -41,45 +41,45 @@ public class MetricCollector {
     //     return new Data(command.toString(), output.toString());
     // }
 
-    public PingData collectPing(String target) {
-        return (PingData) executeCommand(List.of("ping", "-c", "4", target), PingData.class);
-    }
+    // public PingData collectPing(String target) {
+    //     return (PingData) executeCommand(List.of("ping", "-c", "4", target), PingData.class);
+    // }
 
-    public IperfData collectIperf(String server) {
-        return (IperfData) executeCommand(List.of("iperf3", "-c", server), IperfData.class);
-    }
+    // public IperfData collectIperf(String server) {
+    //     return (IperfData) executeCommand(List.of("iperf3", "-c", server), IperfData.class);
+    // }
 
-    public NetworkInterfacesData collectNetworkInterfaces() {
-        return (NetworkInterfacesData) executeCommand(List.of("ip", "-s", "link"), NetworkInterfacesData.class);
-    }
+    // public NetworkInterfacesData collectNetworkInterfaces() {
+    //     return (NetworkInterfacesData) executeCommand(List.of("ip", "-s", "link"), NetworkInterfacesData.class);
+    // }
 
-    private Data executeCommand(List<String> command, Class<? extends Data> dataType) {
-        StringBuilder output = new StringBuilder();
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            Process process = processBuilder.start();
+    // private Data executeCommand(List<String> command, Class<? extends Data> dataType) {
+    //     StringBuilder output = new StringBuilder();
+    //     try {
+    //         ProcessBuilder processBuilder = new ProcessBuilder(command);
+    //         Process process = processBuilder.start();
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
+    //         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    //             String line;
+    //             while ((line = reader.readLine()) != null) {
+    //                 output.append(line).append("\n");
+    //             }
+    //         }
 
-            process.waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-            output.append("Error executing command: ").append(command);
-        }
+    //         process.waitFor();
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         output.append("Error executing command: ").append(command);
+    //     }
 
-        if (dataType == PingData.class) {
-            return new PingData(command.toString(), output.toString());
-        } else if (dataType == IperfData.class) {
-            return new IperfData(command.toString(), output.toString());
-        } else if (dataType == NetworkInterfacesData.class) {
-            return new NetworkInterfacesData(command.toString(), output.toString());
-        } else {
-            throw new IllegalArgumentException("Unknown data type");
-        }
-    }
+    //     if (dataType == PingData.class) {
+    //         return new PingData(command.toString(), output.toString());
+    //     } else if (dataType == IperfData.class) {
+    //         return new IperfData(command.toString(), output.toString());
+    //     } else if (dataType == NetworkInterfacesData.class) {
+    //         return new NetworkInterfacesData(command.toString(), output.toString());
+    //     } else {
+    //         throw new IllegalArgumentException("Unknown data type");
+    //     }
+    // }
 }
