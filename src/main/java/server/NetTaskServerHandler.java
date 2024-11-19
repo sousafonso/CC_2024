@@ -13,15 +13,26 @@ package server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import message.Message;
 import message.MessageType;
+import message.Task;
 
 public class NetTaskServerHandler implements Runnable {
+    private Lock lock = new ReentrantLock();
+    private static Map<String, List<Integer>> ackWaitingList = new HashMap<>();
+    private final Map<String, Task> tasks;
     private DatagramPacket packet;
 
-    public NetTaskServerHandler(DatagramPacket packet) {
+    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks) {
         this.packet = packet;
+        this.tasks = tasks;
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
@@ -42,17 +53,29 @@ public class NetTaskServerHandler implements Runnable {
                  }
             }
     }
-    
+
     // Processa a mensagem recebida e executa a ação correspondente
     private void processRegister(Message msg){
-        /*
-        TODO decidir o que fazer
-         - mandar logo tarefa aso agent
-         - memorizar que agent está registado e depois mandar tarefa
-         - server só manda tarefa quando agent pede (novo tipo de mensagem)*/
+        Message reply;
+        String sourceAddress = packet.getAddress().getHostAddress();
+        Task agentTask = tasks.get(sourceAddress);
+        int newSeqNumber = msg.getSeqNumber() + 1;
 
-        System.out.println(msg.toString());
-        Message reply = new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null);
+        if(agentTask == null){
+            reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Ack, null);
+        }
+        else{
+            reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Task, agentTask);
+        }
+
+        lock.lock();
+        try {
+            ackWaitingList.computeIfAbsent(sourceAddress, k -> new ArrayList<>()).add(newSeqNumber);
+        }
+        finally {
+            lock.unlock();
+        }
+
         sendReply(reply);
     }
 
@@ -62,7 +85,18 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     private void processAck(Message msg){
-        //TODO so receber ack / tirar de lista de pacotes ainda sem ack ?
+        String sourceAddress = packet.getAddress().getHostAddress();
+        int ackNumber = msg.getAckNumber();
+
+        lock.lock();
+        try {
+            if (ackWaitingList.containsKey(sourceAddress)) {
+                ackWaitingList.get(sourceAddress).remove(ackNumber);
+            }
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override

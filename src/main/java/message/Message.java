@@ -53,6 +53,10 @@ public class Message {
         return type;
     }
 
+    public Data getData() {
+        return data;
+    }
+
     public byte[] getPDU() {
         ByteBuffer buffer = ByteBuffer.allocate(2 * Integer.BYTES + 1 + data.getPayload().length());
         buffer.putInt(seqNumber);
