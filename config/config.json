@@ -1,168 +1,165 @@
 {
   "tasks": [
     {
-      "task_id": "task-001",
+      "taskId": "task-001",
       "frequency": 30,
       "devices": [
         {
-          "device_id": "r1",
-          "device_metrics": {
-            "cpu_usage": true,
-            "ram_usage": false,
-            "interface_stats": ["eth0", "eth1"]
+          "deviceId": "r1",
+          "deviceMetrics": {
+            "cpuUsage": true,
+            "ramUsage": false,
+            "interfaceStats": []
           },
-          "link_metrics": {
+          "linkMetrics": {
             "bandwidth": {
               "role": "client",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 1,
               "protocol": "TCP"
             },
-            "jitter": {
-              "role": "server",
-              "server_address": "192.168.1.2",
-              "duration": 12,
-              "protocol": "TCP"
-            },
-            "packet_loss":  {
+            "packetLoss":  {
               "role": "client",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 10,
               "protocol": "TCP"
             },
             "latency": {
+              "serverAddress": "192.168.1.2",
               "frequency": 15,
-              "package_count": 10
+              "packageCount": 10
             }
           },
-          "alertflow_conditions": {
-            "cpu_usage": 80,
-            "ram_usage": 85,
-            "interface_stats": 1000,
-            "packet_loss": 5,
+          "alertFlowConditions": {
+            "cpuUsage": 80,
+            "interfaceStats": 1000,
+            "packetLoss": 5,
             "jitter": 100
           }
         },
         {
-          "device_id": "r2",
-          "device_metrics": {
-            "cpu_usage": true,
-            "ram_usage": false,
-            "interface_stats": ["eth0"]
+          "deviceId": "r2",
+          "deviceMetrics": {
+            "cpuUsage": true,
+            "ramUsage": false,
+            "interfaceStats": ["eth0"]
           },
-          "link_metrics": {
+          "linkMetrics": {
             "bandwidth": {
               "role": "server",
-              "server_address": "192.168.1.1",
+              "serverAddress": "192.168.1.1",
               "duration": 20,
               "protocol": "UDP"
             },
             "jitter": {
               "role": "server",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 12,
               "protocol": "TCP"
             },
-            "packet_loss":  {
+            "packetLoss":  {
               "role": "client",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 10,
               "protocol": "TCP"
             },
             "latency": {
+              "serverAddress": "192.168.1.2",
               "frequency": 15,
-              "package_count": 10
+              "packageCount": 10
             }
           },
-          "alertflow_conditions": {
-            "cpu_usage": 75,
-            "ram_usage": 90,
-            "interface_stats": 1500,
-            "packet_loss": 4,
+          "alertFlowConditions": {
+            "cpuUsage": 75,
+            "ramUsage": 90,
+            "interfaceStats": 1500,
+            "packetLoss": 4,
             "jitter": 80
           }
         }
       ]
     },
     {
-      "task_id": "task-002",
+      "taskId": "task-002",
       "frequency": 60,
       "devices": [
         {
-          "device_id": "r3",
-          "device_metrics": {
-            "cpu_usage": true,
-            "ram_usage": true,
-            "interface_stats": ["eth0"]
+          "deviceId": "r3",
+          "deviceMetrics": {
+            "cpuUsage": true,
+            "ramUsage": true,
+            "interfaceStats": ["eth0"]
           },
-          "link_metrics": {
+          "linkMetrics": {
             "bandwidth": {
               "role": "server",
-              "server_address": "192.168.1.1",
+              "serverAddress": "192.168.1.1",
               "duration": 20,
               "protocol": "UDP"
             },
             "jitter": {
               "role": "server",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 12,
               "protocol": "TCP"
             },
-            "packet_loss":  {
+            "packetLoss":  {
               "role": "client",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 10,
               "protocol": "TCP"
             },
             "latency": {
+              "serverAddress": "192.168.1.2",
               "frequency": 15,
-              "package_count": 10
+              "packageCount": 10
             }
           },
-          "alertflow_conditions": {
-            "cpu_usage": 75,
-            "ram_usage": 90,
-            "interface_stats": 1500,
-            "packet_loss": 4,
+          "alertFlowConditions": {
+            "cpuUsage": 75,
+            "ramUsage": 90,
+            "interfaceStats": 1500,
+            "packetLoss": 4,
             "jitter": 80
           }
         },
         {
-          "device_id": "r4",
-          "device_metrics": {
-            "cpu_usage": false,
-            "ram_usage": true,
-            "interface_stats": ["eth1", "eth2"]
+          "deviceId": "r4",
+          "deviceMetrics": {
+            "cpuUsage": false,
+            "ramUsage": true,
+            "interfaceStats": ["eth1", "eth2"]
           },
-          "link_metrics": {
+          "linkMetrics": {
             "bandwidth": {
               "role": "server",
-              "server_address": "192.168.1.1",
+              "serverAddress": "192.168.1.1",
               "duration": 20,
               "protocol": "UDP"
             },
             "jitter": {
               "role": "server",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 12,
               "protocol": "TCP"
             },
-            "packet_loss":  {
+            "packetLoss":  {
               "role": "client",
-              "server_address": "192.168.1.2",
+              "serverAddress": "192.168.1.2",
               "duration": 10,
               "protocol": "TCP"
             },
             "latency": {
+              "serverAddress": "192.168.1.2",
               "frequency": 15,
-              "package_count": 10
+              "packageCount": 10
             }
           },
-          "alertflow_conditions": {
-            "cpu_usage": 75,
-            "ram_usage": 90,
-            "interface_stats": 1500,
-            "packet_loss": 4,
+          "alertFlowConditions": {
+            "cpuUsage": 75,
+            "ramUsage": 90,
+            "interfaceStats": 1500,
+            "packetLoss": 4,
             "jitter": 80
           }
         }

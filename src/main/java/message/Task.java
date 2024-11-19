@@ -20,24 +20,12 @@ public class Task extends Data {
     private List<LinkMetric> linkMetrics;
     private List<LocalMetric> localMetrics;
 
-    public Task(String timestamp, String id, int frequency, List<LocalMetric> localMetrics, List<LinkMetric> linkMetrics) {
-        //super(timestamp);
+    public Task(String id, int frequency, Conditions conditions, List<LinkMetric> linkMetrics, List<LocalMetric> localMetrics) {
         this.id = id;
         this.frequency = frequency;
-        if (localMetrics != null) {
-            this.numLinkMetrics = linkMetrics.size();
-        }
-        else {
-            this.numLinkMetrics = 0;
-        }
-
-        if (localMetrics != null) {
-            this.numLocalMetrics = localMetrics.size();
-        }
-        else {
-            this.numLocalMetrics = 0;
-        }
-
+        this.conditions = conditions;
+        this.numLinkMetrics = linkMetrics.size();
+        this.numLocalMetrics = localMetrics.size();
         this.localMetrics = localMetrics;
         this.linkMetrics = linkMetrics;
     }

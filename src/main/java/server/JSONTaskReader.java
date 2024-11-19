@@ -5,31 +5,30 @@ import java.util.*;
 
 import com.fasterxml.jackson.databind.*;
 
+import message.Conditions;
 import message.Task;
+import taskContents.*;
 
 public class JSONTaskReader {
     private final String filePath = "./config/config.json";
     private JsonTasks tasks;
 
-    public JSONTaskReader() {
-    }
+    public JSONTaskReader() {}
 
-    public  Map<String, Task> readJson(){
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+    public Map<String, Task> readJson(){
         try{
-            this.tasks = mapper.readValue(new File(this.filePath), JsonTasks.class);
+            this.tasks = (new ObjectMapper()).readValue(new File(this.filePath), JsonTasks.class);
             System.out.println(this.tasks);
-
+            return this.tasks.jsonTaskToTask();
         }
         catch(IOException e){
             System.out.println("Erro ao ler o ficheiro JSON");
             e.printStackTrace();
-
+            return null;
         }
-        return null;
     }
 }
+
 class JsonTasks{
     private List<JsonTask> tasks;
 
@@ -52,19 +51,80 @@ class JsonTasks{
     public String toString() {
         return tasks.toString();
     }
+
+    public Map<String, Task> jsonTaskToTask(){
+        Map<String, Task> taskMap = new HashMap<>();
+
+        for(JsonTask jsonTask : this.tasks){
+            for(Device device : jsonTask.getDevices()){
+                String deviceID = device.getDeviceId();
+                DeviceMetrics deviceMetrics = device.getDeviceMetrics();
+                LinkMetrics linkMetrics = device.getLinkMetrics();
+                AlertFlowConditions afc = device.getAlertFlowConditions();
+
+                List<LocalMetric> localMetrics = new ArrayList<>();
+                if(deviceMetrics != null){
+                    if(deviceMetrics.isCpuUsage()){
+                        localMetrics.add(new LocalMetric(MetricName.CPU_USAGE, new ArrayList<>()));
+                    }
+
+                    if(deviceMetrics.isRamUsage()){
+                        localMetrics.add(new LocalMetric(MetricName.RAM_USAGE, new ArrayList<>()));
+                    }
+
+                    List<String> interfaces = deviceMetrics.getInterfaceStats();
+                    if(interfaces != null && !interfaces.isEmpty()){
+                        localMetrics.add(new LocalMetric(MetricName.INTERFACE_STATS, interfaces));
+                    }
+                }
+
+                List<LinkMetric> linkMetricsList = new ArrayList<>();
+                if(linkMetrics != null){
+                    JsonIperfMetric bandwidth = linkMetrics.getBandwidth();
+                    JsonIperfMetric jitter = linkMetrics.getJitter();
+                    JsonIperfMetric packetLoss = linkMetrics.getPacketLoss();
+                    JsonLatency latency = linkMetrics.getLatency();
+
+                    if(bandwidth != null){
+                        linkMetricsList.add(new IperfMetric(MetricName.BANDWIDTH, bandwidth.getServerAddress(), bandwidth.getRole().charAt(0), bandwidth.getDuration(), bandwidth.getProtocol()));
+                    }
+
+                    if(jitter != null){
+                        linkMetricsList.add(new IperfMetric(MetricName.JITTER, jitter.getServerAddress(), jitter.getRole().charAt(0), jitter.getDuration(), jitter.getProtocol()));
+                    }
+
+                    if(packetLoss != null){
+                        linkMetricsList.add(new IperfMetric(MetricName.PACKET_LOSS, packetLoss.getServerAddress(), packetLoss.getRole().charAt(0), packetLoss.getDuration(), packetLoss.getProtocol()));
+                    }
+
+                    if(latency != null){
+                        linkMetricsList.add(new Latency(MetricName.LATENCY, latency.getServerAddress(), latency.getFrequency(), latency.getPackageCount()));
+                    }
+                }
+
+                Conditions conditions = new Conditions(afc.getCpuUsage(), afc.getRamUsage(), afc.getInterfaceStats(), afc.getJitter(), afc.getPacketLoss());
+
+                Task task = new Task(jsonTask.getTaskId(), jsonTask.getFrequency(), conditions, linkMetricsList, localMetrics);
+
+                taskMap.put(deviceID, task);
+            }
+        }
+
+        return taskMap;
+    }
 }
 
 class JsonTask {
-    private String task_id;
+    private String taskId;
     private int frequency;
     private List<Device> devices;
 
     public String getTaskId() {
-        return task_id;
+        return taskId;
     }
 
-     public void setTaskId(String task_id) {
-        this.task_id = task_id;
+     public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 
     public Integer getFrequency() {
@@ -86,198 +146,198 @@ class JsonTask {
     @Override
     public String toString() {
         return "JsonTask: {" +
-                "task_id='" + task_id + '\'' +
+                "taskId='" + taskId + '\'' +
                 ", frequency=" + frequency +
                 ", devices=" + devices +
-                '}';
+                "}\n";
     }
 }
 
 class Device {
-    private String device_id;
-    private DeviceMetrics devic_metrics;
-    private LinkMetrics link_metrics;
-    private AlertFlowConditions alertflow_conditions;
+    private String deviceId;
+    private DeviceMetrics deviceMetrics;
+    private LinkMetrics linkMetrics;
+    private AlertFlowConditions alertFlowConditions;
 
-    public Device(String device_id, DeviceMetrics devic_metrics, LinkMetrics link_metrics, AlertFlowConditions alertflow_conditions) {
-        this.device_id = device_id;
-        this.devic_metrics = devic_metrics;
-        this.link_metrics = link_metrics;
-        this.alertflow_conditions = alertflow_conditions;
+    public Device(String deviceId, DeviceMetrics deviceMetrics, LinkMetrics linkMetrics, AlertFlowConditions alertFlowConditions) {
+        this.deviceId = deviceId;
+        this.deviceMetrics = deviceMetrics;
+        this.linkMetrics = linkMetrics;
+        this.alertFlowConditions = alertFlowConditions;
     }
 
     public Device(){
-        this.device_id = null;
-        this.devic_metrics = null;
-        this.link_metrics = null;
-        this.alertflow_conditions = null;
+        this.deviceId = null;
+        this.deviceMetrics = null;
+        this.linkMetrics = null;
+        this.alertFlowConditions = new AlertFlowConditions();
     }
 
     public String getDeviceId() {
-        return device_id;
+        return deviceId;
     }
 
-    public void setDeviceId(String device_id) {
-        this.device_id = device_id;
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 
     public DeviceMetrics getDeviceMetrics() {
-        return devic_metrics;
+        return deviceMetrics;
     }
 
-    public void setDeviceMetrics(DeviceMetrics devic_metrics) {
-        this.devic_metrics = devic_metrics;
+    public void setDeviceMetrics(DeviceMetrics deviceMetrics) {
+        this.deviceMetrics = deviceMetrics;
     }
 
     public LinkMetrics getLinkMetrics() {
-        return link_metrics;
+        return linkMetrics;
     }
 
-    public void setLinkMetrics(LinkMetrics link_metrics) {
-        this.link_metrics = link_metrics;
+    public void setLinkMetrics(LinkMetrics linkMetrics) {
+        this.linkMetrics = linkMetrics;
     }
 
-    public AlertFlowConditions getAlertflowConditions() {
-        return alertflow_conditions;
+    public AlertFlowConditions getAlertFlowConditions() {
+        return alertFlowConditions;
     }
 
-    public void setAlertflowConditions(AlertFlowConditions alertflow_conditions) {
-        this.alertflow_conditions = alertflow_conditions;
+    public void setAlertFlowConditions(AlertFlowConditions alertFlowConditions) {
+        this.alertFlowConditions = alertFlowConditions;
     }
 
     public String toString() {
         return "Device: {" +
-                "device_id='" + device_id + '\'' +
-                ", devic_metrics=" + devic_metrics +
-                ", link_metrics=" + link_metrics +
-                ", alertflow_conditions=" + alertflow_conditions +
+                "deviceId='" + deviceId + '\'' +
+                ", deviceMetrics=" + deviceMetrics +
+                ", linkMetrics=" + linkMetrics +
+                ", alertFlowConditions=" + alertFlowConditions +
                 "}\n";
     }
 }
 
 class DeviceMetrics {
-    private boolean cpu_usage;
-    private boolean ram_usage;
-    private List<String> interface_stats;
+    private boolean cpuUsage;
+    private boolean ramUsage;
+    private List<String> interfaceStats;
 
-    public DeviceMetrics(boolean cpu_usage, boolean ram_usage, List<String> interface_stats) {
-        this.cpu_usage = cpu_usage;
-        this.ram_usage = ram_usage;
-        this.interface_stats = interface_stats;
+    public DeviceMetrics(boolean cpuUsage, boolean ramUsage, List<String> interfaceStats) {
+        this.cpuUsage = cpuUsage;
+        this.ramUsage = ramUsage;
+        this.interfaceStats = interfaceStats;
     }
 
     public DeviceMetrics() {
-        this.cpu_usage = false;
-        this.ram_usage = false;
-        this.interface_stats = null;
+        this.cpuUsage = false;
+        this.ramUsage = false;
+        this.interfaceStats = null;
     }
 
     public boolean isCpuUsage() {
-        return cpu_usage;
+        return cpuUsage;
     }
 
-    public void setCpuUsage(boolean cpu_usage) {
-        this.cpu_usage = cpu_usage;
+    public void setCpuUsage(boolean cpuUsage) {
+        this.cpuUsage = cpuUsage;
     }
 
     public boolean isRamUsage() {
-        return ram_usage;
+        return ramUsage;
     }
 
-    public void setRamUsage(boolean ram_usage) {
-        this.ram_usage = ram_usage;
+    public void setRamUsage(boolean ramUsage) {
+        this.ramUsage = ramUsage;
     }
 
     public List<String> getInterfaceStats() {
-        return interface_stats;
+        return interfaceStats;
     }
 
-    public void setInterfaceStats(List<String> interface_stats) {
-        this.interface_stats = interface_stats;
+    public void setInterfaceStats(List<String> interfaceStats) {
+        this.interfaceStats = interfaceStats;
     }
 
     public String toString() {
         return "DeviceMetrics: {" +
-                "cpu_usage=" + cpu_usage +
-                ", ram_usage=" + ram_usage +
-                ", interface_stats=" + interface_stats +
+                "cpuUsage=" + cpuUsage +
+                ", ramUsage=" + ramUsage +
+                ", interfaceStats=" + interfaceStats +
                 '}';
     }
 }
 
 class LinkMetrics {
-    private IperfMetric bandwidth;
-    private IperfMetric jitter;
-    private IperfMetric packet_loss;
-    private Latency latency;
+    private JsonIperfMetric bandwidth;
+    private JsonIperfMetric jitter;
+    private JsonIperfMetric packetLoss;
+    private JsonLatency latency;
 
-    public LinkMetrics(IperfMetric bandwidth, IperfMetric jitter, IperfMetric packet_loss, Latency latency) {
+    public LinkMetrics(JsonIperfMetric bandwidth, JsonIperfMetric jitter, JsonIperfMetric packetLoss, JsonLatency latency) {
         this.bandwidth = bandwidth;
         this.jitter = jitter;
-        this.packet_loss = packet_loss;
+        this.packetLoss = packetLoss;
         this.latency = latency;
     }
     public LinkMetrics() {
         this.bandwidth = null;
         this.jitter = null;
-        this.packet_loss = null;
+        this.packetLoss = null;
         this.latency = null;
     }
 
-    public IperfMetric getBandwidth() {
+    public JsonIperfMetric getBandwidth() {
         return bandwidth;
     }
 
-    public void setBandwidth(IperfMetric bandwidth) {
+    public void setBandwidth(JsonIperfMetric bandwidth) {
         this.bandwidth = bandwidth;
     }
 
-    public IperfMetric getJitter() {
+    public JsonIperfMetric getJitter() {
         return jitter;
     }
 
-    public void setJitter(IperfMetric jitter) {
+    public void setJitter(JsonIperfMetric jitter) {
         this.jitter = jitter;
     }
 
-    public IperfMetric getPacketLoss() {
-        return packet_loss;
+    public JsonIperfMetric getPacketLoss() {
+        return packetLoss;
     }
 
-    public void setPacketLoss(IperfMetric packet_loss) {
-        this.packet_loss = packet_loss;
+    public void setPacketLoss(JsonIperfMetric packetLoss) {
+        this.packetLoss = packetLoss;
     }
 
-    public Latency getLatency() {
+    public JsonLatency getLatency() {
         return latency;
     }
 
-    public void setLatency(Latency latency) {
+    public void setLatency(JsonLatency latency) {
         this.latency = latency;
     }
 
     public String toString() {
-        return "LinkMetrics: {" + "bandwidth=" + bandwidth + ", jitter=" + jitter + ", packet_loss=" + packet_loss + ", latency=" + latency + '}';
+        return "LinkMetrics: {" + "bandwidth=" + bandwidth + ", jitter=" + jitter + ", packetLoss=" + packetLoss + ", latency=" + latency + '}';
     }
 }
 
-class IperfMetric{
+class JsonIperfMetric {
     private String role;
-    private String server_address;
+    private String serverAddress;
     private int duration;
     private String protocol;
 
-    public IperfMetric(String role, String server_address, int duration, String protocol) {
+    public JsonIperfMetric(String role, String serverAddress, int duration, String protocol) {
         this.role = role;
-        this.server_address = server_address;
+        this.serverAddress = serverAddress;
         this.duration = duration;
         this.protocol = protocol;
     }
 
-    public IperfMetric() {
+    public JsonIperfMetric() {
         this.role = null;
-        this.server_address = null;
-        this.duration = 0;
+        this.serverAddress = null;
+        this.duration = -1;
         this.protocol = null;
     }
 
@@ -290,11 +350,11 @@ class IperfMetric{
     }
 
     public String getServerAddress() {
-        return server_address;
+        return serverAddress;
     }
 
-    public void setServerAddress(String server_address) {
-        this.server_address = server_address;
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
     }
 
     public int getDuration() {
@@ -314,22 +374,33 @@ class IperfMetric{
     }
 
     public String toString(){
-        return "IperfMetric: { role=" + role + ", server_address=" + server_address + ", duration=" + duration + ", protocol=" + protocol + "}";
+        return "JsonIperfMetric: { role=" + role + ", serverAddress=" + serverAddress + ", duration=" + duration + ", protocol=" + protocol + "}";
     }
 }
 
-class Latency{
+class JsonLatency {
+    private String serverAddress;
     private int frequency;
-    private int package_count;
+    private int packageCount;
 
-    public Latency(int frequency, int package_count) {
+    public JsonLatency(String serverAddress, int frequency, int packageCount) {
+        this.serverAddress = serverAddress;
         this.frequency = frequency;
-        this.package_count = package_count;
+        this.packageCount = packageCount;
     }
 
-    public Latency() {
-        this.frequency = 0;
-        this.package_count = 0;
+    public JsonLatency() {
+        this.serverAddress = null;
+        this.frequency = -1;
+        this.packageCount = -1;
+    }
+
+    public String getServerAddress() {
+        return serverAddress;
+    }
+
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
     }
 
     public int getFrequency() {
@@ -340,72 +411,72 @@ class Latency{
         this.frequency = frequency;
     }
 
-    public int getPackageQuantity() {
-        return package_count;
+    public int getPackageCount() {
+        return packageCount;
     }
 
-    public void setPackageQuantity(int package_count) {
-        this.package_count = package_count;
+    public void setPackageCount(int packageCount) {
+        this.packageCount = packageCount;
     }
 
     public String toString(){
-        return "latency: { frequency: " + frequency + ", package_count: " + package_count + "}";
+        return "latency: { serverAddress: " + serverAddress + ", frequency: " + frequency + ", packageCount: " + packageCount + "}";
     }
 }
 
 class AlertFlowConditions {
-    private int cpu_usage;
-    private int ram_usage;
-    private int interface_stats;
-    private int packet_loss;
+    private int cpuUsage;
+    private int ramUsage;
+    private int interfaceStats;
+    private int packetLoss;
     private int jitter;
 
-    public AlertFlowConditions(int cpu_usage, int ram_usage, int interface_stats, int packet_loss, int jitter){
-        this.cpu_usage = cpu_usage;
-        this.ram_usage = ram_usage;
-        this.interface_stats = interface_stats;
-        this.packet_loss = packet_loss;
+    public AlertFlowConditions(int cpuUsage, int ramUsage, int interfaceStats, int packetLoss, int jitter){
+        this.cpuUsage = cpuUsage;
+        this.ramUsage = ramUsage;
+        this.interfaceStats = interfaceStats;
+        this.packetLoss = packetLoss;
         this.jitter = jitter;
     }
 
     public AlertFlowConditions() {
-        this.cpu_usage = 0;
-        this.ram_usage = 0;
-        this.interface_stats = 0;
-        this.packet_loss = 0;
-        this.jitter = 0;
+        this.cpuUsage = -1;
+        this.ramUsage = -1;
+        this.interfaceStats = -1;
+        this.packetLoss = -1;
+        this.jitter = -1;
     }
 
     public int getCpuUsage() {
-        return cpu_usage;
+        return cpuUsage;
     }
 
-    public void setCpuUsage(int cpu_usage) {
-        this.cpu_usage = cpu_usage;
+    public void setCpuUsage(int cpuUsage) {
+        this.cpuUsage = cpuUsage;
     }
 
     public int getRamUsage() {
-        return ram_usage;
+        return ramUsage;
     }
 
-    public void setRamUsage(int ram_usage) {
-        this.ram_usage = ram_usage;
+    public void setRamUsage(int ramUsage) {
+        this.ramUsage = ramUsage;
     }
 
     public int getInterfaceStats() {
-        return interface_stats;
+        return interfaceStats;
     }
 
-    public void setInterfaceStats(int interface_stats) {
-        this.interface_stats = interface_stats;
+    public void setInterfaceStats(int interfaceStats) {
+        this.interfaceStats = interfaceStats;
     }
 
     public int getPacketLoss() {
-        return packet_loss;
+        return packetLoss;
     }
 
-    public void setPacketLoss(int packet_loss) {
-        this.packet_loss = packet_loss;
+    public void setPacketLoss(int packetLoss) {
+        this.packetLoss = packetLoss;
     }
 
     public int getJitter() {
@@ -417,9 +488,6 @@ class AlertFlowConditions {
     }
 
     public String toString(){
-        return "AlertFlowConditions: { cpu_usage: " + cpu_usage + ", ram_usage: " + ram_usage + ", interface_stats: " + interface_stats + ", packet_loss: " + packet_loss + ", jitter: " + jitter + "}";
+        return "AlertFlowConditions: { cpuUsage: " + cpuUsage + ", ramUsage: " + ramUsage + ", interfaceStats: " + interfaceStats + ", packetLoss: " + packetLoss + ", jitter: " + jitter + "}";
     }
-
 }
-
-

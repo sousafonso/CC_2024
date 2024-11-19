@@ -6,7 +6,8 @@ public enum MetricName {
     JITTER,
     CPU_USAGE,
     RAM_USAGE,
-    INTERFACE_STATS;
+    INTERFACE_STATS,
+    BANDWIDTH;
 
     public static MetricName fromInteger(int x){
         return switch (x) {
@@ -16,6 +17,7 @@ public enum MetricName {
             case 3 -> CPU_USAGE;
             case 4 -> RAM_USAGE;
             case 5 -> INTERFACE_STATS;
+            case 6 -> BANDWIDTH;
             default -> null;
         };
     }
@@ -28,6 +30,7 @@ public enum MetricName {
             case CPU_USAGE -> 3;
             case RAM_USAGE -> 4;
             case INTERFACE_STATS -> 5;
+            case BANDWIDTH -> 6;
         };
     }
 }
