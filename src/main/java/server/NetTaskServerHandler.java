@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import message.Message;
 import message.MessageType;
@@ -28,11 +30,13 @@ public class NetTaskServerHandler implements Runnable {
     private Lock lock = new ReentrantLock();
     private static Map<String, List<Integer>> ackWaitingList = new HashMap<>();
     private final Map<String, Task> tasks;
+    private final Map<String, AtomicInteger> sequenceNumbers;
     private DatagramPacket packet;
 
-    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks) {
+    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks, Map<String, AtomicInteger> sequenceNumbers) {
         this.packet = packet;
         this.tasks = tasks;
+        this.sequenceNumbers = sequenceNumbers;
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
@@ -59,7 +63,7 @@ public class NetTaskServerHandler implements Runnable {
         Message reply;
         String sourceAddress = packet.getAddress().getHostAddress();
         Task agentTask = tasks.get(sourceAddress);
-        int newSeqNumber = msg.getSeqNumber() + 1;
+        int newSeqNumber = sequenceNumbers.computeIfAbsent(sourceAddress, k -> new AtomicInteger(0)).incrementAndGet();
 
         if(agentTask == null){
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Ack, null);
@@ -100,22 +104,6 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     @Override
-    // public void run() {
-    //     Message msg = new Message((new String(packet.getData())).split(";"));
-        
-    //     if(msg == null){
-    //         System.out.println("Processamento da mensagem falhou");
-    //         return;
-    //     }
-
-    //     switch (msg.getType()) {
-    //         case Regist -> processRegister(msg);
-    //         case TaskResult -> processTaskResult(msg);
-    //         case Ack -> processAck(msg);
-    //         default -> System.out.println("Tipo de mensagem não reconhecido");
-    //     }
-    // }
-
     public void run() {
         Message msg = new Message(packet.getData());
         if (msg == null) {
