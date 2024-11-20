@@ -41,7 +41,7 @@ public class Task extends Data {
             this.linkMetrics = new ArrayList<>(this.numLinkMetrics);
 
             for(int i = 0; i < numLinkMetrics; i++){
-                MetricName name = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
+                MetricName name = MetricName.fromInteger(Integer.parseInt(fields[startIndex++])); // Converte o inteiro que está no campo da mensagem para uma String que está no enum
                 String destination = fields[startIndex++];
 
                 if(name == MetricName.LATENCY) {

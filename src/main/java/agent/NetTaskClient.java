@@ -12,6 +12,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicInteger;
 import message.*;
 
 //TODO rever se é necessário esta classe para uma thread ou se pode ficar no NMS_Agent
@@ -19,6 +20,9 @@ public class NetTaskClient implements Runnable {
     private final int UDP_PORT = 7777;
     private InetAddress serverIp;
     private int serverPort;
+    private final AtomicInteger sequenceNumber = new AtomicInteger(0);
+    private static final int MAX_RETRIES = 5;
+    private static final int TIMEOUT = 1000; // 1 second
 
     public NetTaskClient(InetAddress serverIp, int serverPort) {
         this.serverIp = serverIp;
@@ -28,29 +32,36 @@ public class NetTaskClient implements Runnable {
     @Override
     public void run() {
         DatagramSocket socket = null;
-        try{
+        try {
             socket = new DatagramSocket(UDP_PORT);
-            byte[] byteMsg = (new Message(1, 0, MessageType.Regist, null)).getPDU();
+            int seqNum = sequenceNumber.incrementAndGet();
+            byte[] byteMsg = (new Message(seqNum, 0, MessageType.Regist, null)).getPDU();
             DatagramPacket registerPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIp, serverPort);
             socket.send(registerPacket);
 
             byte[] receiveMsg = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
-            socket.receive(receivePacket);
-            Message msg = new Message(receivePacket.getData());
-            if(msg.getType() == MessageType.Task) {
-                System.out.println(msg.toString());
-                // TODO processar tarefa
+            socket.setSoTimeout(TIMEOUT);
+
+            for (int i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    socket.receive(receivePacket);
+                    Message msg = new Message(receivePacket.getData());
+                    if (msg.getType() == MessageType.Ack && msg.getSeqNumber() == seqNum) {
+                        System.out.println("ACK received for sequence number: " + seqNum);
+                        break;
+                    }
+                } catch (IOException e) {
+                    System.out.println("Timeout, retrying...");
+                    socket.send(registerPacket);
+                }
             }
-        }
-        catch(SocketException e){
+        } catch (SocketException e) {
             System.out.println("UDP Socket Agent Error");
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             System.out.println("Erro ao enviar pacote");
-        }
-        finally{
-            if(socket != null && !socket.isClosed()){
+        } finally {
+            if(socket != null && !socket.isClosed()) {
                 socket.close();
             }
         }
