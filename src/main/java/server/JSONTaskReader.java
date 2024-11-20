@@ -18,7 +18,6 @@ public class JSONTaskReader {
     public Map<String, Task> readJson(){
         try{
             this.tasks = (new ObjectMapper()).readValue(new File(this.filePath), JsonTasks.class);
-            System.out.println(this.tasks);
             return this.tasks.jsonTaskToTask();
         }
         catch(IOException e){

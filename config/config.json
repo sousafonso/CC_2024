@@ -5,7 +5,7 @@
       "frequency": 30,
       "devices": [
         {
-          "deviceId": "r1",
+          "deviceId": "10.0.0.1",
           "deviceMetrics": {
             "cpuUsage": true,
             "ramUsage": false,
@@ -38,7 +38,7 @@
           }
         },
         {
-          "deviceId": "r2",
+          "deviceId": "10.0.0.2",
           "deviceMetrics": {
             "cpuUsage": true,
             "ramUsage": false,
@@ -84,7 +84,7 @@
       "frequency": 60,
       "devices": [
         {
-          "deviceId": "r3",
+          "deviceId": "10.0.0.3",
           "deviceMetrics": {
             "cpuUsage": true,
             "ramUsage": true,
@@ -124,7 +124,7 @@
           }
         },
         {
-          "deviceId": "r4",
+          "deviceId": "10.0.0.4",
           "deviceMetrics": {
             "cpuUsage": false,
             "ramUsage": true,

@@ -42,6 +42,9 @@ public class NMS_Server {
         // Carregar tarefas do JSON de configuração
         //TODO deixar ip como chave e ser isso o id do device, ou deixar o nome e forncer isso no registo (modificar esse tipo de mensagem)
         Map<String, Task> tasks  = this.taskReader.readJson();
+        for(Map.Entry<String, Task> entry: tasks.entrySet()) {
+            System.out.println("Device " + entry.getKey() + " : " + entry.getValue() + "\n");
+        }
 
         // Distribuir tarefas para os agentes
         //distributeTasks(tasks);
@@ -80,7 +83,6 @@ public class NMS_Server {
     }*/
 
     public static void main(String[] args) {
-        System.out.println("A iniciar servidor");
         NMS_Server server = new NMS_Server();
         server.initialize();
     }
