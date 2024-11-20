@@ -15,6 +15,8 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import message.*;
 import taskContents.LocalMetric;
@@ -25,6 +27,7 @@ public class NMS_Agent {
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
+    private Lock lock = new ReentrantLock();
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
     private Task task;
@@ -41,6 +44,7 @@ public class NMS_Agent {
     }
 
     private void processConditions(Conditions conditions){
+        lock.lock();
         int cpuUsage = conditions.getCpuUsage();
         if(cpuUsage >= 0){
             alertValues.put(MetricName.CPU_USAGE, cpuUsage);
@@ -65,6 +69,7 @@ public class NMS_Agent {
         if(jitter >= 0){
             alertValues.put(MetricName.JITTER, jitter);
         }
+        lock.unlock();
     }
 
     private void processTask(){
