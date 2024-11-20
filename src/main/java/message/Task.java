@@ -93,6 +93,10 @@ public class Task extends Data {
         return id;
     }
 
+    public Conditions getConditions() {
+        return conditions;
+    }
+
     @Override
     public String getPayload() {
         StringBuilder s = new StringBuilder(id + ";" +

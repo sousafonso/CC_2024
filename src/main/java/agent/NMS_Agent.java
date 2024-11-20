@@ -10,66 +10,106 @@
 
 package agent;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.net.*;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Map;
 
-import message.Message;
-import message.MessageType;
-import message.TaskResult;
+import message.*;
 import taskContents.LocalMetric;
 import taskContents.MetricName;
 
 public class NMS_Agent {
     private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
-    // private final int SERVER_TCP_PORT = 6000;
+    private final int SERVER_TCP_PORT = 6000;
+    private final int UDP_PORT = 7777;
     private InetAddress serverIP;
-
+    private Map<MetricName, Integer> alertValues;
+    private Task task;
     private String agentId;
-    private MetricCollector metricCollector;
-    private LocalMetric localMetric;
-    // private AlertFlowClient alertFlowClient;
-    private NetTaskClient netTaskClient;
-
-    // Limites para disparo de alertas
-    // private final double CPU_USAGE_LIMIT = 80.0;
-    // private final double RAM_USAGE_LIMIT = 90.0;
-    // private final int INTERFACE_PPS_LIMIT = 2000;
-    // private final double PACKET_LOSS_LIMIT = 5.0;
-    // private final int JITTER_LIMIT = 100;
-
-    // public NMS_Agent(String agentId) {
-    //     this.agentId = agentId;
-    //     try {
-    //         this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
-    //     } catch (UnknownHostException e) {
-    //         System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
-    //     }
-    // }
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
-        this.localMetric = new LocalMetric(MetricName.CPU_USAGE, null); // Exemplo de inicialização
         try {
             this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
         } catch (UnknownHostException e) {
             System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
         }
+        this.alertValues = new HashMap<>();
     }
 
-    // private void start() {
-    //     Thread NetTaskClient = new Thread(new NetTaskClient(serverIP, SERVER_UDP_PORT));
-    //     NetTaskClient.start();
-    // }
+    private void processConditions(Conditions conditions){
+        int cpuUsage = conditions.getCpuUsage();
+        if(cpuUsage >= 0){
+            alertValues.put(MetricName.CPU_USAGE, cpuUsage);
+        }
+
+        int ramUsage = conditions.getRamUsage();
+        if(ramUsage >= 0){
+            alertValues.put(MetricName.RAM_USAGE, ramUsage);
+        }
+
+        int interfaceStats = conditions.getInterfaceStats();
+        if(interfaceStats >= 0){
+            alertValues.put(MetricName.INTERFACE_STATS, interfaceStats);
+        }
+
+        int packetLoss = conditions.getPacketLoss();
+        if(packetLoss >= 0){
+            alertValues.put(MetricName.PACKET_LOSS, packetLoss);
+        }
+
+        int jitter = conditions.getJitter();
+        if(jitter >= 0){
+            alertValues.put(MetricName.JITTER, jitter);
+        }
+    }
+
+    private void processTask(){
+
+    }
 
     private void start() {
-        netTaskClient = new NetTaskClient(serverIP, SERVER_UDP_PORT);
-        new Thread(netTaskClient).start();
-        startMetricCollection();
-        // startAlertMonitoring();
+        DatagramSocket socket = null;
+        try{
+            Random random = new Random();
+            socket = new DatagramSocket(UDP_PORT);
+            int seqNumber = random.nextInt(Integer.MAX_VALUE);
+            byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, null)).getPDU();
+            DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
+            socket.send(sendPacket);
+
+            byte[] receiveMsg = new byte[1024];
+            DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
+            //TODO timeout, se nao receber dentro do tempo enviar novamente o registo
+            socket.receive(receivePacket);
+            Message msg = new Message(receivePacket.getData());
+
+            byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
+            sendPacket = new DatagramPacket(byteMsg, byteMsg.length);
+            socket.send(sendPacket);
+
+            this.task = (Task) msg.getData();
+            processConditions(this.task.getConditions());
+
+
+        }
+        catch(SocketException e){
+            System.out.println("UDP Socket Agent Error");
+        }
+        catch (IOException e){
+            System.out.println("Erro ao enviar pacote");
+        }
+        finally{
+            if(socket != null && !socket.isClosed()){
+                socket.close();
+            }
+        }
     }
 
-    private void startMetricCollection() {
+    /*private void startMetricCollection() {
         new Thread(() -> {
             while (true) {
                 try {
@@ -96,7 +136,7 @@ public class NMS_Agent {
                 }
             }
         }).start();
-    }
+    }*/
 
     public static void main(String[] args) {
         NMS_Agent agent = new NMS_Agent(args[0]);
