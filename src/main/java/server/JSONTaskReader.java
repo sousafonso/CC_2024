@@ -55,8 +55,8 @@ class JsonTasks{
     public Map<String, Task> jsonTaskToTask(){
         Map<String, Task> taskMap = new HashMap<>();
 
-        for(JsonTask jsonTask : this.tasks){
-            for(Device device : jsonTask.getDevices()){
+        for(JsonTask jsonTask : this.tasks){ // ciclo que percorre todas as tarefas
+            for(Device device : jsonTask.getDevices()){ // ciclo que percorre todos os dispositivos de cada tarefa
                 String deviceID = device.getDeviceId();
                 DeviceMetrics deviceMetrics = device.getDeviceMetrics();
                 LinkMetrics linkMetrics = device.getLinkMetrics();
