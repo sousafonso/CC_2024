@@ -27,13 +27,13 @@ public class Message {
 
         switch(this.type){
             case Task:
-                this.data = new Task(fields, 3);
+                this.data = new Task(fields);
                 break;
             case TaskResult:
-                this.data = new TaskResult(fields, 3);
+                this.data = new TaskResult(fields);
                 break;
             case Notification:
-                this.data = new Notification(fields, 3);
+                this.data = new Notification(fields);
                 break;
             default:
                 this.data = null;
@@ -64,9 +64,6 @@ public class Message {
         buffer.put(type.toByte());
         if(data != null) {
             buffer.put(data.getPayload().getBytes(StandardCharsets.UTF_8));
-        }
-        else{
-            System.out.println("Data is null");
         }
         return buffer.array();
     }

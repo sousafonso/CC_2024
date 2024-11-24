@@ -101,7 +101,7 @@ class JsonTasks{
                     }
                 }
 
-                Conditions conditions = new Conditions(afc.getCpuUsage(), afc.getRamUsage(), afc.getInterfaceStats(), afc.getJitter(), afc.getPacketLoss());
+                Conditions conditions = new Conditions(afc.getCpuUsage(), afc.getRamUsage(), afc.getInterfaceStats(), afc.getPacketLoss(), afc.getJitter());
 
                 Task task = new Task(jsonTask.getTaskId(), jsonTask.getFrequency(), conditions, linkMetricsList, localMetrics);
 

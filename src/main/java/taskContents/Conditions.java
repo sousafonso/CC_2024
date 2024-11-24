@@ -43,6 +43,10 @@ public class Conditions {
         return jitter;
     }
 
+    public String toString() {
+        return "cpu: " + cpuUsage + ", ram: " + ramUsage + ", interface: " + interfaceStats + ", packet: " + packetLoss + ", jitter: " + jitter;
+    }
+
     public String getPayload(){
         return cpuUsage + ";" +
                 ramUsage + ";" +

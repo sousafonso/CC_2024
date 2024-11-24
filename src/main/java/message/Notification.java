@@ -53,7 +53,8 @@ public class Notification extends Data {
         this.timestamp = timestamp;
     }
 
-    public Notification(String[] fields, int startIndex){
+    public Notification(String[] fields){
+        int startIndex = 0;
         //this.agentId = fields[startIndex++];
         this.alertType = fields[startIndex++];
         this.alertValue = Double.parseDouble(fields[startIndex++]);

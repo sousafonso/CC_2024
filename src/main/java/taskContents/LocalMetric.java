@@ -11,7 +11,7 @@ public class LocalMetric {
 
     public LocalMetric(MetricName metricName, List<String> interfaces) {
         this.metricName = metricName;
-        this.numInterfaces = interfaces.size();
+        this.numInterfaces = interfaces == null ? 0 : interfaces.size();
         this.interfaces = interfaces;
     }
 

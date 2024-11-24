@@ -93,14 +93,12 @@ public class NMS_Agent {
             Message msg = new Message(receivePacket.getData());
 
             byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
-            sendPacket = new DatagramPacket(byteMsg, byteMsg.length);
+            sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
             socket.send(sendPacket);
 
             this.task = (Task) msg.getData();
-            System.out.println("Received task: " + task);
 
             processConditions(this.task.getConditions());
-            System.out.println("Received conditions: " + this.alertValues);
 
         }
         catch(SocketException e){

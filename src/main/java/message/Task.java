@@ -30,10 +30,12 @@ public class Task extends Data {
         this.linkMetrics = linkMetrics;
     }
 
-    public Task(String[] fields, int startIndex){
+    public Task(String[] fields){
+        int startIndex = 0;
         this.id = fields[startIndex++];
         this.frequency = Integer.parseInt(fields[startIndex++]);
         this.conditions = new Conditions(fields, startIndex);
+        startIndex += 5;
         this.numLinkMetrics = Integer.parseInt(fields[startIndex++]);
         this.numLocalMetrics = Integer.parseInt(fields[startIndex++]);
 
@@ -138,6 +140,7 @@ public class Task extends Data {
                 //"timestamp='" + super.getTimestamp() + '\'' +
                 "id='" + getId() + '\'' +
                 ", frequency='" + frequency + '\'' +
+                ", conditions=" + conditions +
                 ", numLinkMetrics=" + numLinkMetrics +
                 ", numLocalMetrics=" + numLocalMetrics +
                 ", LinkMetrics=" + linkMetricsStr +

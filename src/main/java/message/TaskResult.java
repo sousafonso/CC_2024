@@ -15,7 +15,8 @@ public class TaskResult extends Data {
         this.result = result;
     }
 
-    public TaskResult(String[] fields, int startIndex) {
+    public TaskResult(String[] fields) {
+        int startIndex = 0;
         this.taskId = fields[startIndex++];
         this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
         this.result = fields[startIndex];
