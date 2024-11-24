@@ -21,6 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import message.*;
+import storage.StorageModule;
 
 public class NMS_Server {
     private final int UDP_PORT = 5000; //TODO talvez mover constantes para a classe NetTaskServerListener
@@ -84,7 +85,7 @@ public class NMS_Server {
     private void distributeTasks(Map<String, Task> tasks) {
         if (tasks != null) {
             for (Map.Entry<String, Task> entry : tasks.entrySet()) {
-                System.out.println("A distribuir tarefa: " + entry.getValue().getTaskId());
+                System.out.println("A distribuir tarefa: " + entry.getValue().getId());
                 //netTaskHandler.sendTaskToAgents(entry.getValue());  // Enviar a tarefa para NetTaskHandler
             }
         } else {

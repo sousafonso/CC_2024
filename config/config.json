@@ -38,7 +38,7 @@
           }
         },
         {
-          "deviceId": "10.0.0.2",
+          "deviceId": "127.0.0.1",
           "deviceMetrics": {
             "cpuUsage": true,
             "ramUsage": false,

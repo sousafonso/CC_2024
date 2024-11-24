@@ -58,11 +58,16 @@ public class Message {
     }
 
     public byte[] getPDU() {
-        ByteBuffer buffer = ByteBuffer.allocate(2 * Integer.BYTES + 1 + data.getPayload().length());
+        ByteBuffer buffer = ByteBuffer.allocate(2 * Integer.BYTES + 1 + (data == null ? 0 : data.getPayload().length()));
         buffer.putInt(seqNumber);
         buffer.putInt(ackNumber);
         buffer.put(type.toByte());
-        buffer.put(data.getPayload().getBytes(StandardCharsets.UTF_8));
+        if(data != null) {
+            buffer.put(data.getPayload().getBytes(StandardCharsets.UTF_8));
+        }
+        else{
+            System.out.println("Data is null");
+        }
         return buffer.array();
     }
 

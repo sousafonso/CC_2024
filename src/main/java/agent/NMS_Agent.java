@@ -19,7 +19,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import message.*;
-import taskContents.LocalMetric;
+import taskContents.Conditions;
 import taskContents.MetricName;
 
 public class NMS_Agent {
@@ -27,7 +27,8 @@ public class NMS_Agent {
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
-    private Lock lock = new ReentrantLock();
+
+    private Lock alertValuesLock = new ReentrantLock();
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
     private Task task;
@@ -44,7 +45,7 @@ public class NMS_Agent {
     }
 
     private void processConditions(Conditions conditions){
-        lock.lock();
+        alertValuesLock.lock();
         int cpuUsage = conditions.getCpuUsage();
         if(cpuUsage >= 0){
             alertValues.put(MetricName.CPU_USAGE, cpuUsage);
@@ -69,11 +70,10 @@ public class NMS_Agent {
         if(jitter >= 0){
             alertValues.put(MetricName.JITTER, jitter);
         }
-        lock.unlock();
+        alertValuesLock.unlock();
     }
 
     private void processTask(){
-
     }
 
     private void start() {
@@ -97,8 +97,10 @@ public class NMS_Agent {
             socket.send(sendPacket);
 
             this.task = (Task) msg.getData();
-            processConditions(this.task.getConditions());
+            System.out.println("Received task: " + task);
 
+            processConditions(this.task.getConditions());
+            System.out.println("Received conditions: " + this.alertValues);
 
         }
         catch(SocketException e){
@@ -114,63 +116,13 @@ public class NMS_Agent {
         }
     }
 
-    /*private void startMetricCollection() {
-        new Thread(() -> {
-            while (true) {
-                try {
-                    double cpuUsage = localMetric.collectCpuUsage();
-                    double ramUsage = localMetric.collectRamUsage();
-                    String interfaceStats = localMetric.collectInterfaceStats();
-
-                    // Enviar métricas coletadas
-                    TaskResult result = new TaskResult(agentId, MetricName.CPU_USAGE, String.valueOf(cpuUsage));
-                    Message message = new Message(1, 0, MessageType.TaskResult, result);
-                    //netTaskClient.sendMessage(message);
-
-                    result = new TaskResult(agentId, MetricName.RAM_USAGE, String.valueOf(ramUsage));
-                    message = new Message(1, 0, MessageType.TaskResult, result);
-                    //netTaskClient.sendMessage(message);
-
-                    result = new TaskResult(agentId, MetricName.INTERFACE_STATS, interfaceStats);
-                    message = new Message(1, 0, MessageType.TaskResult, result);
-                    //netTaskClient.sendMessage(message);
-
-                    Thread.sleep(5000); // Coleta a cada 5 segundos
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }*/
 
     public static void main(String[] args) {
         NMS_Agent agent = new NMS_Agent(args[0]);
         agent.start();
     }
 
-    /*@Override
-    public void run() {
-        System.out.println("Agente " + agentId + " iniciado.");
-        startMetricCollection();
-        startAlertMonitoring();
-    }
-
-    private void startMetricCollection() {
-        new Thread(() -> {
-            while (true) {
-                try {
-                    Data metricData = metricCollector.collectPing("8.8.8.8"); // Exemplo de coleta de ping
-                    TaskResult result = new TaskResult(agentId, MetricName.LATENCY, metricData.getPayload());
-                    Message message = new Message(1, 0, MessageType.TaskResult, result);
-                    netTaskClient.sendMessage(message);
-                    Thread.sleep(5000); // Coleta a cada 5 segundos
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
+    /*
     // APENAS UM EXEMPLO
     private void checkCriticalConditions() {
         // Exemplo de coleta de métricas

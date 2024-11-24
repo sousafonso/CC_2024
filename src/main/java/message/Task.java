@@ -19,9 +19,8 @@ public class Task extends Data {
     private int numLocalMetrics;
     private List<LinkMetric> linkMetrics;
     private List<LocalMetric> localMetrics;
-    private List <String> devices;
 
-    public Task(String id, int frequency, Conditions conditions, List<LinkMetric> linkMetrics, List<LocalMetric> localMetrics, List<String> devices) {
+    public Task(String id, int frequency, Conditions conditions, List<LinkMetric> linkMetrics, List<LocalMetric> localMetrics) {
         this.id = id;
         this.frequency = frequency;
         this.conditions = conditions;
@@ -29,7 +28,6 @@ public class Task extends Data {
         this.numLocalMetrics = localMetrics.size();
         this.localMetrics = localMetrics;
         this.linkMetrics = linkMetrics;
-        this.devices = devices;
     }
 
     public Task(String[] fields, int startIndex){

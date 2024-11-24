@@ -1,5 +1,7 @@
 package server;
 
+import storage.StorageModule;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,7 +12,7 @@ public class AlertFlowListener implements Runnable{
     private int tcpPort;
     private ServerSocket serverSocket;
 
-    public AlertFlowListener(int port) {
+    public AlertFlowListener(int port, StorageModule storageModule) {
         this.tcpPort = port;
     }
 

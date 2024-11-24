@@ -39,22 +39,30 @@
 package message;
 
 public class Notification extends Data {
-    private String agentId;
+    //private String agentId;
     private String alertType;
     private double alertValue;
     private double threshold;
     private String timestamp;
 
     public Notification(String agentId, String alertType, double alertValue, double threshold, String timestamp) {
-        this.agentId = agentId;
+        //this.agentId = agentId;
         this.alertType = alertType;
         this.alertValue = alertValue;
         this.threshold = threshold;
         this.timestamp = timestamp;
     }
 
+    public Notification(String[] fields, int startIndex){
+        //this.agentId = fields[startIndex++];
+        this.alertType = fields[startIndex++];
+        this.alertValue = Double.parseDouble(fields[startIndex++]);
+        this.threshold = Double.parseDouble(fields[startIndex++]);
+        this.timestamp = fields[startIndex];
+    }
+
     public String getNotificationId() {
-        return agentId + "-" + alertType + "-" + timestamp;
+        return alertType + "-" + timestamp;
     }
 
     public String getMessage() {
@@ -63,6 +71,6 @@ public class Notification extends Data {
 
     @Override
     public String getPayload() {
-        return agentId + ";" + alertType + ";" + alertValue + ";" + threshold + ";" + timestamp;
+        return alertType + ";" + alertValue + ";" + threshold + ";" + timestamp;
     }
 }

@@ -3,49 +3,28 @@ package server;
 import java.io.*;
 import java.util.*;
 
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import message.Conditions;
+import taskContents.Conditions;
 import message.Task;
 import taskContents.*;
 
 public class JSONTaskReader {
-    // private final String filePath = "./config/config.json";
-    // private JsonTasks tasks;
+    private final String filePath = "./config/config.json";
+    private JsonTasks tasks;
 
-    // public JSONTaskReader() {}
+    public JSONTaskReader() {}
 
-    // public Map<String, Task> readJson(){
-    //     try{
-    //         this.tasks = (new ObjectMapper()).readValue(new File(this.filePath), JsonTasks.class);
-    //         return this.tasks.jsonTaskToTask();
-    //     }
-    //     catch(IOException e){
-    //         System.out.println("Erro ao ler o ficheiro JSON");
-    //         e.printStackTrace();
-    //         return null;
-    //     }
-    // }
-    public Map<String, Task> readJson(String filePath) {
-        Map<String, Task> tasks = new HashMap<>();
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            JsonNode rootNode = mapper.readTree(new File(filePath));
-            JsonNode tasksNode = rootNode.path("tasks");
-            for (JsonNode taskNode : tasksNode) {
-                String taskId = taskNode.path("taskId").asText();
-                int frequency = taskNode.path("frequency").asInt();
-                List<String> devices = new ArrayList<>();
-                for (JsonNode deviceNode : taskNode.path("devices")) {
-                    devices.add(deviceNode.asText());
-                }
-                Task task = new Task(taskId, frequency, devices);
-                tasks.put(taskId, task);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public Map<String, Task> readJson(){
+        try{
+            this.tasks = (new ObjectMapper()).readValue(new File(this.filePath), JsonTasks.class);
+            return this.tasks.jsonTaskToTask();
         }
-        return tasks;
+        catch(IOException e){
+            System.out.println("Erro ao ler o ficheiro JSON");
+            e.printStackTrace();
+            return null;
+        }
     }
 }
 
@@ -143,7 +122,7 @@ class JsonTask {
         return taskId;
     }
 
-     public void setTaskId(String taskId) {
+    public void setTaskId(String taskId) {
         this.taskId = taskId;
     }
 

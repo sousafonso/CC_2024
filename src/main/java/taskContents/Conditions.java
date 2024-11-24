@@ -1,4 +1,4 @@
-package message;
+package taskContents;
 
 public class Conditions {
     private int cpuUsage;
