@@ -27,12 +27,15 @@ public class NMS_Agent {
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
+    private final int MAX_RETRIES = 5;
+    private final int TIMEOUT = 1000; // 1 segundo
 
     private Lock alertValuesLock = new ReentrantLock();
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
     private Task task;
     private String agentId;
+    private NetTaskClient netTaskClient;
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
@@ -77,38 +80,86 @@ public class NMS_Agent {
     }
 
     private void start() {
+        netTaskClient = new NetTaskClient(serverIP, SERVER_UDP_PORT);
+        new Thread(netTaskClient).start();
+        registerAgent();
+    }
+
+    // private void start() {
+    //     DatagramSocket socket = null;
+    //     try{
+    //         Random random = new Random();
+    //         socket = new DatagramSocket(UDP_PORT);
+    //         int seqNumber = random.nextInt(Integer.MAX_VALUE);
+    //         byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, null)).getPDU();
+    //         DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
+    //         socket.send(sendPacket);
+
+    //         byte[] receiveMsg = new byte[1024];
+    //         DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
+    //         //TODO timeout, se nao receber dentro do tempo enviar novamente o registo
+    //         socket.receive(receivePacket);
+    //         Message msg = new Message(receivePacket.getData());
+
+    //         byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
+    //         sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
+    //         socket.send(sendPacket);
+
+    //         this.task = (Task) msg.getData();
+
+    //         processConditions(this.task.getConditions());
+
+    //     }
+    //     catch(SocketException e){
+    //         System.out.println("UDP Socket Agent Error");
+    //     }
+    //     catch (IOException e){
+    //         System.out.println("Erro ao enviar pacote");
+    //     }
+    //     finally{
+    //         if(socket != null && !socket.isClosed()){
+    //             socket.close();
+    //         }
+    //     }
+    // }
+
+    private void registerAgent() {
         DatagramSocket socket = null;
-        try{
-            Random random = new Random();
+        try {
             socket = new DatagramSocket(UDP_PORT);
-            int seqNumber = random.nextInt(Integer.MAX_VALUE);
-            byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, null)).getPDU();
+            int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+            byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, new AgentRegister(agentId))).getPDU();
             DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
-            socket.send(sendPacket);
 
-            byte[] receiveMsg = new byte[1024];
-            DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
-            //TODO timeout, se nao receber dentro do tempo enviar novamente o registo
-            socket.receive(receivePacket);
-            Message msg = new Message(receivePacket.getData());
+            boolean acknowledged = false;
+            for (int i = 0; i < MAX_RETRIES; i++) {
+                socket.send(sendPacket);
+                socket.setSoTimeout(TIMEOUT);
 
-            byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
-            sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
-            socket.send(sendPacket);
+                try {
+                    byte[] receiveMsg = new byte[1024];
+                    DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
+                    socket.receive(receivePacket);
+                    Message msg = new Message(receivePacket.getData());
 
-            this.task = (Task) msg.getData();
+                    if (msg.getType() == MessageType.Ack && msg.getSeqNumber() == seqNumber) {
+                        System.out.println("ACK recebido para o número de sequência: " + seqNumber);
+                        acknowledged = true;
+                        break;
+                    }
+                } catch (SocketTimeoutException e) {
+                    System.out.println("Timeout, tentando novamente...");
+                }
+            }
 
-            processConditions(this.task.getConditions());
-
-        }
-        catch(SocketException e){
-            System.out.println("UDP Socket Agent Error");
-        }
-        catch (IOException e){
-            System.out.println("Erro ao enviar pacote");
-        }
-        finally{
-            if(socket != null && !socket.isClosed()){
+            if (!acknowledged) {
+                System.err.println("Falha ao registrar o agente após " + MAX_RETRIES + " tentativas.");
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao enviar pacote de registro");
+            e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
         }
