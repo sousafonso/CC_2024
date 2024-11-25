@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import message.Message;
 import message.MessageType;
 import message.Task;
+import message.TaskResult;
+import storage.StorageModule;
 
 public class NetTaskServerHandler implements Runnable {
     private Lock lock = new ReentrantLock();
@@ -32,6 +34,7 @@ public class NetTaskServerHandler implements Runnable {
     private final Map<String, Task> tasks;
     private final Map<String, AtomicInteger> sequenceNumbers;
     private DatagramPacket packet;
+    private StorageModule storageModule;
 
     public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks, Map<String, AtomicInteger> sequenceNumbers) {
         this.packet = packet;
@@ -85,7 +88,8 @@ public class NetTaskServerHandler implements Runnable {
 
     private void processTaskResult(Message msg){
         System.out.println("Task Result Received: " + msg.toString());
-        //TODO Guardar resultado da tarefa ?
+        TaskResult taskResult = (TaskResult) msg.getData();
+        storageModule.storeTaskResult(taskResult.getTaskId(), taskResult);
     }
 
     private void processAck(Message msg){
