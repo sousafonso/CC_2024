@@ -95,8 +95,20 @@ public class Task extends Data {
         return id;
     }
 
+    public int getFrequency() {
+        return frequency;
+    }
+
     public Conditions getConditions() {
         return conditions;
+    }
+
+    public List<LinkMetric> getLinkMetrics() {
+        return linkMetrics;
+    }
+
+    public List<LocalMetric> getLocalMetrics() {
+        return localMetrics;
     }
 
     @Override

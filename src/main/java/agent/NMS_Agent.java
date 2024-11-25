@@ -12,14 +12,14 @@ package agent;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import message.*;
 import taskContents.Conditions;
+import taskContents.LinkMetric;
+import taskContents.LocalMetric;
 import taskContents.MetricName;
 
 public class NMS_Agent {
@@ -84,8 +84,17 @@ public class NMS_Agent {
     }
 
     private void processTask(){
-    
+        int frequency = this.task.getFrequency();
+        List<LocalMetric> localMetrics = this.task.getLocalMetrics();
+        List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
 
+        for(LocalMetric localMetric: localMetrics){
+            new MetricCollector(frequency, localMetric, null).run();
+        }
+
+        for(LinkMetric linkMetric: linkMetrics){
+            new MetricCollector(frequency, null, linkMetric).run();
+        }
     }
 
     private void start() {
@@ -99,7 +108,7 @@ public class NMS_Agent {
              this.task = (Task) msg.getData();
 
              processConditions(this.task.getConditions());
-
+             processTask();
          }
          finally{
              if(netTaskSocket != null && !netTaskSocket.isClosed()){
