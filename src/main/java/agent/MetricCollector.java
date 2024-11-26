@@ -15,7 +15,11 @@ public class MetricCollector implements Runnable {
     }
 
     public void processLocalMetric(){
-
+        // a cada frequency tempo:
+        // processar tarefa
+        // switch para cada tipo de tarefa
+        // pegar no resultado
+        // mandar resultado
     }
 
     public void processLinkMetric(){

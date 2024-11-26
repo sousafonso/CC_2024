@@ -12,6 +12,7 @@ package agent;
 
 import java.io.IOException;
 import java.net.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,6 +24,38 @@ import taskContents.LocalMetric;
 import taskContents.MetricName;
 
 public class NMS_Agent {
+    public class MetricResult{
+        private LocalDateTime timeSent;
+        private Message taskResult;
+
+        public MetricResult(LocalDateTime timeSent, Message taskResult) {
+            this.timeSent = timeSent;
+            this.taskResult = taskResult;
+        }
+
+        public LocalDateTime getTimeSent() {
+            return timeSent;
+        }
+
+        public Message getTaskResult() {
+            return taskResult;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(this == obj){
+                return true;
+            }
+
+            if(obj == null || obj.getClass() != this.getClass()){
+                return false;
+            }
+
+            MetricResult other = (MetricResult) obj;
+            return this.timeSent.equals(other.timeSent) && this.taskResult.equals(other.taskResult);
+        }
+    }
+
     private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
@@ -30,12 +63,12 @@ public class NMS_Agent {
     private final int MAX_RETRIES = 5;
     private final int TIMEOUT = 1000; // 1 segundo
 
-    private Lock alertValuesLock = new ReentrantLock();
+    private DatagramSocket netTaskSocket;
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
+    private List<MetricResult> waitingAck;
     private Task task;
     private String agentId;
-    private DatagramSocket netTaskSocket;
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
@@ -55,7 +88,6 @@ public class NMS_Agent {
     }
 
     private void processConditions(Conditions conditions){
-        alertValuesLock.lock();
         int cpuUsage = conditions.getCpuUsage();
         if(cpuUsage >= 0){
             alertValues.put(MetricName.CPU_USAGE, cpuUsage);
@@ -80,7 +112,6 @@ public class NMS_Agent {
         if(jitter >= 0){
             alertValues.put(MetricName.JITTER, jitter);
         }
-        alertValuesLock.unlock();
     }
 
     private void processTask(){
@@ -95,6 +126,22 @@ public class NMS_Agent {
         for(LinkMetric linkMetric: linkMetrics){
             new MetricCollector(frequency, null, linkMetric).run();
         }
+
+        //thread a receber acks
+        //while true
+        for(MetricResult pair : this.waitingAck){
+            //if(diferença timestam e data atual maior que time out)
+            //  mandar mensagem de novo pela connection
+
+        }
+
+        // esperar por acks ?????????????????
+        // lista mensagem que ainda nao tem ack na connection ou aqui?
+        // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
+        // se já passou o timeout enviar mensagem de novo
+        // se não n fazer nada, esperar
+        // quando se receber um ack, ir ao map remover a entrada
+        // adicionar ao map quando se manda a mensagem
     }
 
     private void start() {
@@ -109,6 +156,13 @@ public class NMS_Agent {
 
              processConditions(this.task.getConditions());
              processTask();
+
+             //while true
+             // esperar algum tempo para fazer verificação?
+             for(MetricResult pair : this.waitingAck){
+                 //if(diferença timestam e data atual maior que time out)
+                 //  mandar mensagem de novo pela connection
+             }
          }
          finally{
              if(netTaskSocket != null && !netTaskSocket.isClosed()){
