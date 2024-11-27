@@ -41,7 +41,7 @@
           "deviceId": "127.0.0.1",
           "deviceMetrics": {
             "cpuUsage": true,
-            "ramUsage": false,
+            "ramUsage": true,
             "interfaceStats": ["eth0"]
           },
           "linkMetrics": {

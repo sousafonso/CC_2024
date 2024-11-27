@@ -99,7 +99,9 @@ public class NetTaskServerHandler implements Runnable {
         lock.lock();
         try {
             if (ackWaitingList.containsKey(sourceAddress)) {
-                ackWaitingList.get(sourceAddress).remove(ackNumber);
+                List<Integer> list = ackWaitingList.get(sourceAddress);
+                list.remove((Integer) ackNumber);
+                ackWaitingList.put(sourceAddress, list);
             }
         }
         finally {

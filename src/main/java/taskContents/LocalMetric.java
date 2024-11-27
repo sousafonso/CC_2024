@@ -15,6 +15,18 @@ public class LocalMetric {
         this.interfaces = interfaces;
     }
 
+    public MetricName getMetricName() {
+        return metricName;
+    }
+
+    public int getNumInterfaces() {
+        return numInterfaces;
+    }
+
+    public List<String> getInterfaces() {
+        return interfaces;
+    }
+
     public String getPayload() {
         StringBuilder payload = new StringBuilder();
         payload.append(metricName.toInteger()).append(";").append(numInterfaces);

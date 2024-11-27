@@ -14,8 +14,11 @@ import java.io.IOException;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import message.*;
 import taskContents.Conditions;
@@ -66,7 +69,7 @@ public class NMS_Agent {
     private DatagramSocket netTaskSocket;
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
-    private List<MetricResult> waitingAck;
+    private List<MetricResult> waitingAck = new ArrayList<>();
     private Task task;
     private String agentId;
 
@@ -119,12 +122,14 @@ public class NMS_Agent {
         List<LocalMetric> localMetrics = this.task.getLocalMetrics();
         List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
 
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
+
         for(LocalMetric localMetric: localMetrics){
-            new MetricCollector(frequency, localMetric, null).run();
+            executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, 3, TimeUnit.SECONDS);
         }
 
         for(LinkMetric linkMetric: linkMetrics){
-            new MetricCollector(frequency, null, linkMetric).run();
+            new MetricCollector(null, linkMetric).run();
         }
 
         //thread a receber acks
