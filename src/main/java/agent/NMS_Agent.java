@@ -8,26 +8,24 @@
     Monitorizar condições críticas e enviar alertas quando necessário.
  */
 
-package agent;
+ package agent;
 
-import java.io.IOException;
-import java.net.*;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+ import message.*;
+ import taskContents.*;
+ 
+ import java.io.IOException;
+ import java.net.*;
+ import java.time.Duration;
+ import java.time.LocalDateTime;
+ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
-import message.*;
-import taskContents.Conditions;
-import taskContents.LinkMetric;
-import taskContents.LocalMetric;
-import taskContents.MetricName;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+ import java.util.concurrent.locks.ReentrantLock;
 
 public class NMS_Agent {
-    public class MetricResult{
+    private static class MetricResult {
         private LocalDateTime timeSent;
         private Message taskResult;
 
@@ -40,17 +38,21 @@ public class NMS_Agent {
             return timeSent;
         }
 
+        public void setTimeSent(LocalDateTime timeSent) {
+            this.timeSent = timeSent;
+        }
+
         public Message getTaskResult() {
             return taskResult;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if(this == obj){
+            if (this == obj) {
                 return true;
             }
 
-            if(obj == null || obj.getClass() != this.getClass()){
+            if (obj == null || obj.getClass() != this.getClass()) {
                 return false;
             }
 
@@ -61,7 +63,6 @@ public class NMS_Agent {
 
     private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
-    private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
     private final int MAX_RETRIES = 5;
     private final int TIMEOUT = 1000; // 1 segundo
@@ -69,9 +70,11 @@ public class NMS_Agent {
     private DatagramSocket netTaskSocket;
     private InetAddress serverIP;
     private Map<MetricName, Integer> alertValues;
-    private List<MetricResult> waitingAck = new ArrayList<>();
+    private List<MetricResult> waitingAck;
     private Task task;
     private String agentId;
+    private Lock lock = new ReentrantLock();
+
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
@@ -81,115 +84,218 @@ public class NMS_Agent {
             System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
         }
         this.alertValues = new HashMap<>();
+        this.waitingAck = new ArrayList<>();
 
-        try{
-            this.netTaskSocket = new DatagramSocket(UDP_PORT);
-        }
-        catch(SocketException e){
-            System.err.println("ERROR: Could not open UDP socket: " + UDP_PORT);
-        }
-    }
-
-    private void processConditions(Conditions conditions){
-        int cpuUsage = conditions.getCpuUsage();
-        if(cpuUsage >= 0){
-            alertValues.put(MetricName.CPU_USAGE, cpuUsage);
-        }
-
-        int ramUsage = conditions.getRamUsage();
-        if(ramUsage >= 0){
-            alertValues.put(MetricName.RAM_USAGE, ramUsage);
-        }
-
-        int interfaceStats = conditions.getInterfaceStats();
-        if(interfaceStats >= 0){
-            alertValues.put(MetricName.INTERFACE_STATS, interfaceStats);
-        }
-
-        int packetLoss = conditions.getPacketLoss();
-        if(packetLoss >= 0){
-            alertValues.put(MetricName.PACKET_LOSS, packetLoss);
-        }
-
-        int jitter = conditions.getJitter();
-        if(jitter >= 0){
-            alertValues.put(MetricName.JITTER, jitter);
-        }
-    }
-
-    private void processTask(){
-        int frequency = this.task.getFrequency();
-        List<LocalMetric> localMetrics = this.task.getLocalMetrics();
-        List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
-
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
-
-        for(LocalMetric localMetric: localMetrics){
-            executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, 3, TimeUnit.SECONDS);
-        }
-
-        for(LinkMetric linkMetric: linkMetrics){
-            new MetricCollector(null, linkMetric).run();
-        }
-
-        //thread a receber acks
-        //while true
-        for(MetricResult pair : this.waitingAck){
-            //if(diferença timestam e data atual maior que time out)
-            //  mandar mensagem de novo pela connection
-
-        }
-
-        // esperar por acks ?????????????????
-        // lista mensagem que ainda nao tem ack na connection ou aqui?
-        // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
-        // se já passou o timeout enviar mensagem de novo
-        // se não n fazer nada, esperar
-        // quando se receber um ack, ir ao map remover a entrada
-        // adicionar ao map quando se manda a mensagem
-    }
-
-    private void start() {
-         try {
-             Message msg = registerAgent();
-             if(msg == null){
-                 System.out.println("Erro ao registar agente no servidor");
-                 return;
-             }
-
-             this.task = (Task) msg.getData();
-
-             processConditions(this.task.getConditions());
-             processTask();
-
-             //while true
-             // esperar algum tempo para fazer verificação?
-             for(MetricResult pair : this.waitingAck){
-                 //if(diferença timestam e data atual maior que time out)
-                 //  mandar mensagem de novo pela connection
-             }
-         }
-         finally{
-             if(netTaskSocket != null && !netTaskSocket.isClosed()){
-                 netTaskSocket.close();
-             }
-         }
-     }
-
-    private Message registerAgent() {
-        Message msg = null;
         try {
-            //Enviar pacote de registo ao servidor
+            this.netTaskSocket = new DatagramSocket(UDP_PORT);
+        } catch (SocketException e) {
+            System.err.println("ERROR: Could not create UDP socket on port: " + UDP_PORT);
+        }
+    }
+
+    private void processConditions(Conditions conditions) {
+        lock.lock();
+        try {
+            int cpuUsage = conditions.getCpuUsage();
+            if (cpuUsage >= 0) {
+                alertValues.put(MetricName.CPU_USAGE, cpuUsage);
+            }
+
+            int ramUsage = conditions.getRamUsage();
+            if (ramUsage >= 0) {
+                alertValues.put(MetricName.RAM_USAGE, ramUsage);
+            }
+
+            int interfaceStats = conditions.getInterfaceStats();
+            if (interfaceStats >= 0) {
+                alertValues.put(MetricName.INTERFACE_STATS, interfaceStats);
+            }
+
+            int packetLoss = conditions.getPacketLoss();
+            if (packetLoss >= 0) {
+                alertValues.put(MetricName.PACKET_LOSS, packetLoss);
+            }
+
+            int jitter = conditions.getJitter();
+            if (jitter >= 0) {
+                alertValues.put(MetricName.JITTER, jitter);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // private void processTask(){
+    //     int frequency = this.task.getFrequency();
+    //     List<LocalMetric> localMetrics = this.task.getLocalMetrics();
+    //     List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
+
+    //     ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
+
+    //     for(LocalMetric localMetric: localMetrics){
+    //         executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, 3, TimeUnit.SECONDS);
+    //     }
+
+    //     for(LinkMetric linkMetric: linkMetrics){
+    //         new MetricCollector(null, linkMetric).run();
+    //     }
+
+    //     //thread a receber acks
+    //     //while true
+    //     for(MetricResult pair : this.waitingAck){
+    //         //if(diferença timestam e data atual maior que time out)
+    //         //  mandar mensagem de novo pela connection
+
+    //     }
+
+    //     // esperar por acks ?????????????????
+    //     // lista mensagem que ainda nao tem ack na connection ou aqui?
+    //     // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
+    //     // se já passou o timeout enviar mensagem de novo
+    //     // se não n fazer nada, esperar
+    //     // quando se receber um ack, ir ao map remover a entrada
+    //     // adicionar ao map quando se manda a mensagem
+    // }
+
+    private void processTask() {
+        // Coletar métricas locais
+        for (LocalMetric localMetric : task.getLocalMetrics()) {
+            double result;
+            switch (localMetric.getMetricName()) {
+                case CPU_USAGE:
+                    result = localMetric.collectCpuUsage();
+                    break;
+                case RAM_USAGE:
+                    result = localMetric.collectRamUsage();
+                    break;
+                case INTERFACE_STATS:
+                    result = Double.parseDouble(localMetric.collectInterfaceStats());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Métrica desconhecida: " + localMetric.getMetricName());
+            }
+            sendTaskResult(new TaskResult(task.getId(), localMetric.getMetricName(), String.valueOf(result)));
+        }
+
+        // Coletar métricas de link
+        for (LinkMetric linkMetric : task.getLinkMetrics()) {
+            double result;
+            switch (linkMetric.getMetricName()) {
+                case LATENCY:
+                    result = linkMetric.calculateLatency();
+                    break;
+                case JITTER:
+                    result = linkMetric.calculateJitter();
+                    break;
+                case PACKET_LOSS:
+                    result = linkMetric.calculatePacketLoss();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Métrica desconhecida: " + linkMetric.getMetricName());
+            }
+            sendTaskResult(new TaskResult(task.getId(), linkMetric.getMetricName(), String.valueOf(result)));
+        }
+    }
+
+    private void sendTaskResult(TaskResult taskResult) {
+        try {
             int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
-            byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, null)).getPDU();
+            Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
+            byte[] byteMsg = msg.getPDU();
             DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
             netTaskSocket.send(sendPacket);
 
-            //Packet para receber resposta
+            // Adicionar à lista de espera por ACK
+            waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
+        } catch (IOException e) {
+            System.err.println("Erro ao enviar resultado da tarefa");
+            e.printStackTrace();
+        }
+    }
+
+    // private void start() {
+    //      try {
+    //          Message msg = registerAgent();
+    //          if(msg == null){
+    //              System.out.println("Erro ao registar agente no servidor");
+    //              return;
+    //          }
+
+    //          this.task = (Task) msg.getData();
+
+    //          processConditions(this.task.getConditions());
+    //          processTask();
+
+    //          //while true
+    //          // esperar algum tempo para fazer verificação?
+    //          for(MetricResult pair : this.waitingAck){
+    //              //if(diferença timestam e data atual maior que time out)
+    //              //  mandar mensagem de novo pela connection
+    //          }
+    //      }
+    //      finally{
+    //          if(netTaskSocket != null && !netTaskSocket.isClosed()){
+    //              netTaskSocket.close();
+    //          }
+    //      }
+    //  }
+
+    private void start() {
+        try {
+            Message msg = registerAgent();
+            if (msg == null) {
+                System.out.println("Erro ao registar agente no servidor");
+                return;
+            }
+
+            this.task = (Task) msg.getData();
+
+            processConditions(this.task.getConditions());
+            processTask();
+
+            // Thread para receber ACKs
+            new Thread(() -> {
+                while (true) {
+                    lock.lock();
+                    try {
+                        Iterator<MetricResult> iterator = waitingAck.iterator();
+                        while (iterator.hasNext()) {
+                            MetricResult pair = iterator.next();
+                            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
+                                // Reenviar mensagem
+                                netTaskSocket.send(new DatagramPacket(pair.getTaskResult().getPDU(), pair.getTaskResult().getPDU().length, serverIP, SERVER_UDP_PORT));
+                                pair.setTimeSent(LocalDateTime.now());
+                            }
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Erro ao reenviar mensagem");
+                        e.printStackTrace();
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            }).start();
+        } finally {
+            if (netTaskSocket != null && !netTaskSocket.isClosed()) {
+                netTaskSocket.close();
+            }
+        }
+    }
+
+     private Message registerAgent() {
+        Message msg = null;
+        try {
+            // Enviar pacote de registo ao servidor
+            int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+            byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, new AgentRegister(agentId))).getPDU();
+            DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
+            netTaskSocket.send(sendPacket);
+
+            // Packet para receber resposta
             byte[] receiveMsg = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
 
-            //Esperar TIMEOUT, se não receber a tarefa(confirmação), enviar novamente o registo
+            // Esperar TIMEOUT, se não receber a tarefa (confirmação), enviar novamente o registo
             boolean waiting = true;
             netTaskSocket.setSoTimeout(TIMEOUT);
             for (int i = 0; waiting && i < MAX_RETRIES; i++) {
@@ -201,16 +307,15 @@ public class NMS_Agent {
                 }
             }
 
-            if(waiting) return null;
+            if (waiting) return null;
 
             msg = new Message(receivePacket.getData());
 
-            //Enviar ACK ao servidor a confirmar a receção da tarefa(e confirmação do registo)
+            // Enviar ACK ao servidor a confirmar a receção da tarefa (e confirmação do registo)
             byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
             sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
             netTaskSocket.send(sendPacket);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Erro ao enviar pacote de registo");
         }
 
