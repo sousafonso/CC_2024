@@ -94,107 +94,61 @@ public class NMS_Agent {
     }
 
     private void processConditions(Conditions conditions) {
-        lock.lock();
-        try {
-            int cpuUsage = conditions.getCpuUsage();
-            if (cpuUsage >= 0) {
-                alertValues.put(MetricName.CPU_USAGE, cpuUsage);
-            }
+        int cpuUsage = conditions.getCpuUsage();
+        if (cpuUsage >= 0) {
+            alertValues.put(MetricName.CPU_USAGE, cpuUsage);
+        }
 
-            int ramUsage = conditions.getRamUsage();
-            if (ramUsage >= 0) {
-                alertValues.put(MetricName.RAM_USAGE, ramUsage);
-            }
+        int ramUsage = conditions.getRamUsage();
+        if (ramUsage >= 0) {
+            alertValues.put(MetricName.RAM_USAGE, ramUsage);
+        }
 
-            int interfaceStats = conditions.getInterfaceStats();
-            if (interfaceStats >= 0) {
-                alertValues.put(MetricName.INTERFACE_STATS, interfaceStats);
-            }
+        int interfaceStats = conditions.getInterfaceStats();
+        if (interfaceStats >= 0) {
+            alertValues.put(MetricName.INTERFACE_STATS, interfaceStats);
+        }
 
-            int packetLoss = conditions.getPacketLoss();
-            if (packetLoss >= 0) {
-                alertValues.put(MetricName.PACKET_LOSS, packetLoss);
-            }
+        int packetLoss = conditions.getPacketLoss();
+        if (packetLoss >= 0) {
+            alertValues.put(MetricName.PACKET_LOSS, packetLoss);
+        }
 
-            int jitter = conditions.getJitter();
-            if (jitter >= 0) {
-                alertValues.put(MetricName.JITTER, jitter);
-            }
-        } finally {
-            lock.unlock();
+        int jitter = conditions.getJitter();
+        if (jitter >= 0) {
+            alertValues.put(MetricName.JITTER, jitter);
         }
     }
 
-    // private void processTask(){
-    //     int frequency = this.task.getFrequency();
-    //     List<LocalMetric> localMetrics = this.task.getLocalMetrics();
-    //     List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
-
-    //     ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
-
-    //     for(LocalMetric localMetric: localMetrics){
-    //         executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, 3, TimeUnit.SECONDS);
-    //     }
-
-    //     for(LinkMetric linkMetric: linkMetrics){
-    //         new MetricCollector(null, linkMetric).run();
-    //     }
-
-    //     //thread a receber acks
-    //     //while true
-    //     for(MetricResult pair : this.waitingAck){
-    //         //if(diferença timestam e data atual maior que time out)
-    //         //  mandar mensagem de novo pela connection
-
-    //     }
-
-    //     // esperar por acks ?????????????????
-    //     // lista mensagem que ainda nao tem ack na connection ou aqui?
-    //     // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
-    //     // se já passou o timeout enviar mensagem de novo
-    //     // se não n fazer nada, esperar
-    //     // quando se receber um ack, ir ao map remover a entrada
-    //     // adicionar ao map quando se manda a mensagem
-    // }
-
     private void processTask() {
-        // Coletar métricas locais
-        for (LocalMetric localMetric : task.getLocalMetrics()) {
-            double result;
-            switch (localMetric.getMetricName()) {
-                case CPU_USAGE:
-                    result = localMetric.collectCpuUsage();
-                    break;
-                case RAM_USAGE:
-                    result = localMetric.collectRamUsage();
-                    break;
-                case INTERFACE_STATS:
-                    result = Double.parseDouble(localMetric.collectInterfaceStats());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Métrica desconhecida: " + localMetric.getMetricName());
-            }
-            sendTaskResult(new TaskResult(task.getId(), localMetric.getMetricName(), String.valueOf(result)));
+        int frequency = this.task.getFrequency();
+        List<LocalMetric> localMetrics = this.task.getLocalMetrics();
+        List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
+
+        for (LocalMetric localMetric : localMetrics) {
+            executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, frequency, TimeUnit.SECONDS);
         }
 
-        // Coletar métricas de link
-        for (LinkMetric linkMetric : task.getLinkMetrics()) {
-            double result;
-            switch (linkMetric.getMetricName()) {
-                case LATENCY:
-                    result = linkMetric.calculateLatency();
-                    break;
-                case JITTER:
-                    result = linkMetric.calculateJitter();
-                    break;
-                case PACKET_LOSS:
-                    result = linkMetric.calculatePacketLoss();
-                    break;
-                default:
-                    throw new IllegalArgumentException("Métrica desconhecida: " + linkMetric.getMetricName());
-            }
-            sendTaskResult(new TaskResult(task.getId(), linkMetric.getMetricName(), String.valueOf(result)));
+        for (LinkMetric linkMetric : linkMetrics) {
+            executor.scheduleAtFixedRate(new MetricCollector(null, linkMetric), 0, frequency, TimeUnit.SECONDS);
         }
+
+        //thread a receber acks
+        //while true
+        for (MetricResult pair : this.waitingAck) {
+            //if(diferença timestam e data atual maior que time out)
+            //  mandar mensagem de novo pela connection
+        }
+
+        // esperar por acks ?????????????????
+        // lista mensagem que ainda nao tem ack na connection ou aqui?
+        // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
+        // se já passou o timeout enviar mensagem de novo
+        // se não n fazer nada, esperar
+        // quando se receber um ack, ir ao map remover a entrada
+        // adicionar ao map quando se manda a mensagem
     }
 
     private void sendTaskResult(TaskResult taskResult) {
