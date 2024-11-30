@@ -32,14 +32,12 @@ public class NetTaskServerHandler implements Runnable {
     private Lock lock = new ReentrantLock();
     private static Map<String, List<Integer>> ackWaitingList = new HashMap<>();
     private final Map<String, Task> tasks;
-    private final Map<String, AtomicInteger> sequenceNumbers;
     private DatagramPacket packet;
     private StorageModule storageModule;
 
-    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks, Map<String, AtomicInteger> sequenceNumbers) {
+    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks) {
         this.packet = packet;
         this.tasks = tasks;
-        this.sequenceNumbers = sequenceNumbers;
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
@@ -66,7 +64,7 @@ public class NetTaskServerHandler implements Runnable {
         Message reply;
         String sourceAddress = packet.getAddress().getHostAddress();
         Task agentTask = tasks.get(sourceAddress);
-        int newSeqNumber = sequenceNumbers.computeIfAbsent(sourceAddress, k -> new AtomicInteger(0)).incrementAndGet();
+        int newSeqNumber = msg.getSeqNumber() + 1;
 
         if(agentTask == null){
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Ack, null);

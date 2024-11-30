@@ -17,7 +17,6 @@ public class NetTaskServerListener implements Runnable {
     private DatagramSocket socket;
     private static final int MAX_RETRIES = 5;
     private static final int TIMEOUT = 1000; // 1 second
-    private final Map<String, AtomicInteger> sequenceNumbers = new ConcurrentHashMap<>();
 
     public NetTaskServerListener(int port, Map<String, Task> tasks) {
         this.udpPort = port;
@@ -39,7 +38,7 @@ public class NetTaskServerListener implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 System.out.println("NetTaskListener iniciado na porta " + udpPort);
                 socket.receive(packet);
-                Thread dataHandler = new Thread(new NetTaskServerHandler(packet, tasks, sequenceNumbers));
+                Thread dataHandler = new Thread(new NetTaskServerHandler(packet, tasks));
                 dataHandler.start();
             }
         } catch (Exception e) {
