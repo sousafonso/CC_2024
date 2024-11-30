@@ -42,7 +42,7 @@
           "deviceMetrics": {
             "cpuUsage": true,
             "ramUsage": true,
-            "interfaceStats": ["eth0"]
+            "interfaceStats": ["wlp1s0"]
           },
           "linkMetrics": {
             "bandwidth": {

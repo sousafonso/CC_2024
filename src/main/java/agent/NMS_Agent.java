@@ -125,9 +125,10 @@ public class NMS_Agent {
         List<LocalMetric> localMetrics = this.task.getLocalMetrics();
         List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
 
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(localMetrics.size() + linkMetrics.size());
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(this.task.getNumLinkMetrics() + this.task.getNumLocalMetrics());
 
         for (LocalMetric localMetric : localMetrics) {
+            System.out.println("Teste -> " + localMetric);
             executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, frequency, TimeUnit.SECONDS);
         }
 
@@ -263,7 +264,7 @@ public class NMS_Agent {
 
             if (waiting) return null;
 
-            msg = new Message(receivePacket.getData());
+            msg = new Message(receivePacket.getData(), receivePacket.getLength());
 
             // Enviar ACK ao servidor a confirmar a receção da tarefa (e confirmação do registo)
             byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();

@@ -103,6 +103,14 @@ public class Task extends Data {
         return conditions;
     }
 
+    public int getNumLinkMetrics() {
+        return numLinkMetrics;
+    }
+
+    public int getNumLocalMetrics() {
+        return numLocalMetrics;
+    }
+
     public List<LinkMetric> getLinkMetrics() {
         return linkMetrics;
     }

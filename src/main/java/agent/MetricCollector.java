@@ -17,20 +17,21 @@ public class MetricCollector implements Runnable {
     }
 
     private void collectCpuUsage() {
+        String command = "top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'";
         System.out.println("CPU Usage: " + executeCommand(List.of("sh",
                 "-c",
-                "top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'")));
+                command.replaceAll("\\\\[$]", "\\$"))));
     }
 
     private void collectRAMUsage() {
+        String command = "free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'";
         System.out.println("RAM Usage: " + executeCommand(List.of("sh",
                 "-c",
-                "free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'")));
+                command.replaceAll("\\\\[$]", "\\$"))));
     }
 
     public long collectPackets(String interfaceName) throws IOException {
         String statsPath = "/proc/net/dev";
-
         try (BufferedReader br = new BufferedReader(new FileReader(statsPath))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -56,7 +57,7 @@ public class MetricCollector implements Runnable {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
+                    output.append(line);
                 }
             }
 
@@ -123,7 +124,7 @@ public class MetricCollector implements Runnable {
             processLocalMetric();
         }
         else{
-            processLinkMetric();
+            //processLinkMetric();
         }
     }
 }

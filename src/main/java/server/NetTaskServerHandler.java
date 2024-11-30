@@ -109,7 +109,7 @@ public class NetTaskServerHandler implements Runnable {
 
     @Override
     public void run() {
-        Message msg = new Message(packet.getData());
+        Message msg = new Message(packet.getData(), packet.getLength());
         if (msg == null) {
             System.out.println("Processamento da mensagem falhou");
             return;

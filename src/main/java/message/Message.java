@@ -16,8 +16,8 @@ public class Message {
         this.data = msgData;
     }
 
-    public Message(byte[] pdu) {
-        ByteBuffer buffer = ByteBuffer.wrap(pdu);
+    public Message(byte[] pdu, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(pdu, 0, length);
         this.seqNumber = buffer.getInt();
         this.ackNumber = buffer.getInt();
         this.type = MessageType.fromByte(buffer.get());
