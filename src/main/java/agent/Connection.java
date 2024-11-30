@@ -10,12 +10,13 @@ public class Connection {
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
+    private final int TIMEOUT = 1000; // 1 segundo
 
-    private Lock udpSendLock = new ReentrantLock();
-    private Lock udpReceiveLock = new ReentrantLock();
+    private Lock netTaskSendLock = new ReentrantLock();
+    private Lock netTaskReceiveLock = new ReentrantLock();
 
     private InetAddress serverIP;
-    private DatagramSocket udpSocket;
+    private DatagramSocket netTaskSocket;
     private Socket tcpSocket;
 
     public Connection() {
@@ -26,7 +27,8 @@ public class Connection {
         }
 
         try {
-            this.udpSocket = new DatagramSocket(UDP_PORT);
+            this.netTaskSocket = new DatagramSocket(UDP_PORT);
+            this.netTaskSocket.setSoTimeout(TIMEOUT);
             this.tcpSocket = new Socket();
         }
         catch (SocketException e) {
@@ -37,27 +39,32 @@ public class Connection {
     public void sendViaUDP(byte[] data){
         DatagramPacket packet = new DatagramPacket(data, data.length, this.serverIP, SERVER_UDP_PORT);
 
-        udpSendLock.lock();
+        netTaskSendLock.lock();
         try {
-            udpSocket.send(packet);
+            netTaskSocket.send(packet);
         } catch (IOException e) {
             System.out.println("Erro ao enviar pacote via UDP para o servidor.");
         } finally {
-            udpSendLock.unlock();
+            netTaskSendLock.unlock();
         }
     }
 
-    public byte[] receiveViaUDP(){
+    public byte[] receiveViaUDP() throws SocketTimeoutException{
         byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data, data.length);
 
-        udpReceiveLock.lock();
+        netTaskReceiveLock.lock();
         try {
-            udpSocket.receive(packet);
-        } catch (IOException e) {
+            netTaskSocket.receive(packet);
+        }
+        catch (SocketTimeoutException e) {
+            throw new SocketTimeoutException();
+        }
+        catch (IOException e) {
             System.out.println("Erro ao receber pacote via UDP do servidor.");
-        } finally {
-            udpReceiveLock.unlock();
+        }
+        finally {
+             netTaskReceiveLock.unlock();
         }
 
         return packet.getData();
@@ -66,4 +73,10 @@ public class Connection {
     public void sendViaTCP(byte[] data){}
 
     public void receiveViaTCP(byte[] data){}
+
+    public void close(){
+        if (netTaskSocket != null && !netTaskSocket.isClosed()) {
+            netTaskSocket.close();
+        }
+    }
 }

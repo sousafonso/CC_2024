@@ -55,4 +55,14 @@ public class TaskResult extends Data {
 
         return s;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {return true;}
+
+        if (obj == null || obj.getClass() != this.getClass()) {return false;}
+
+        TaskResult that = (TaskResult) obj;
+        return this.taskId.equals(that.taskId) && this.metricName == that.metricName && this.result.equals(that.result);
+    }
 }

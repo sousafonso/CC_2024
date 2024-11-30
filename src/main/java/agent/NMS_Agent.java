@@ -48,49 +48,31 @@ public class NMS_Agent {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
+            if (this == obj) {return true;}
 
-            if (obj == null || obj.getClass() != this.getClass()) {
-                return false;
-            }
+            if (obj == null || obj.getClass() != this.getClass()) {return false;}
 
             MetricResult other = (MetricResult) obj;
             return this.timeSent.equals(other.timeSent) && this.taskResult.equals(other.taskResult);
         }
     }
 
-    private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
-    private final int SERVER_UDP_PORT = 5000;
-    private final int UDP_PORT = 7777;
+    //ainda ver o que fazer com isto
     private final int MAX_RETRIES = 5;
     private final int TIMEOUT = 1000; // 1 segundo
 
-    private DatagramSocket netTaskSocket;
-    private InetAddress serverIP;
+    private Connection connection;
     private Map<MetricName, Integer> alertValues;
     private List<MetricResult> waitingAck;
     private Task task;
     private String agentId;
     private Lock lock = new ReentrantLock();
 
-
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
-        try {
-            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
-        } catch (UnknownHostException e) {
-            System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
-        }
+        this.connection = new Connection();
         this.alertValues = new HashMap<>();
         this.waitingAck = new ArrayList<>();
-
-        try {
-            this.netTaskSocket = new DatagramSocket(UDP_PORT);
-        } catch (SocketException e) {
-            System.err.println("ERROR: Could not create UDP socket on port: " + UDP_PORT);
-        }
     }
 
     private void processConditions(Conditions conditions) {
@@ -125,7 +107,7 @@ public class NMS_Agent {
         List<LocalMetric> localMetrics = this.task.getLocalMetrics();
         List<LinkMetric> linkMetrics = this.task.getLinkMetrics();
 
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(this.task.getNumLinkMetrics() + this.task.getNumLocalMetrics());
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(Math.min(this.task.getNumLinkMetrics() + this.task.getNumLocalMetrics(), Runtime.getRuntime().availableProcessors()));
 
         for (LocalMetric localMetric : localMetrics) {
             System.out.println("Teste -> " + localMetric);
@@ -153,19 +135,13 @@ public class NMS_Agent {
     }
 
     private void sendTaskResult(TaskResult taskResult) {
-        try {
-            int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
-            Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
-            byte[] byteMsg = msg.getPDU();
-            DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
-            netTaskSocket.send(sendPacket);
+        int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+        Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
+        byte[] byteMsg = msg.getPDU();
+        connection.sendViaUDP(byteMsg);
 
-            // Adicionar à lista de espera por ACK
-            waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
-        } catch (IOException e) {
-            System.err.println("Erro ao enviar resultado da tarefa");
-            e.printStackTrace();
-        }
+        // Adicionar à lista de espera por ACK
+        waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
     }
 
     // private void start() {
@@ -218,22 +194,17 @@ public class NMS_Agent {
                             MetricResult pair = iterator.next();
                             if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
                                 // Reenviar mensagem
-                                netTaskSocket.send(new DatagramPacket(pair.getTaskResult().getPDU(), pair.getTaskResult().getPDU().length, serverIP, SERVER_UDP_PORT));
+                                connection.sendViaUDP(pair.getTaskResult().getPDU());
                                 pair.setTimeSent(LocalDateTime.now());
                             }
                         }
-                    } catch (IOException e) {
-                        System.err.println("Erro ao reenviar mensagem");
-                        e.printStackTrace();
                     } finally {
                         lock.unlock();
                     }
                 }
             }).start();
         } finally {
-            if (netTaskSocket != null && !netTaskSocket.isClosed()) {
-                netTaskSocket.close();
-            }
+            connection.close();
         }
     }
 
@@ -243,8 +214,7 @@ public class NMS_Agent {
             // Enviar pacote de registo ao servidor
             int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
             byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, new AgentRegister(agentId))).getPDU();
-            DatagramPacket sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
-            netTaskSocket.send(sendPacket);
+            connection.sendViaUDP(byteMsg);
 
             // Packet para receber resposta
             byte[] receiveMsg = new byte[1024];
@@ -252,13 +222,12 @@ public class NMS_Agent {
 
             // Esperar TIMEOUT, se não receber a tarefa (confirmação), enviar novamente o registo
             boolean waiting = true;
-            netTaskSocket.setSoTimeout(TIMEOUT);
             for (int i = 0; waiting && i < MAX_RETRIES; i++) {
                 try {
-                    netTaskSocket.receive(receivePacket);
+                    receiveMsg = connection.receiveViaUDP();
                     waiting = false;
                 } catch (SocketTimeoutException e) {
-                    netTaskSocket.send(sendPacket);
+                    connection.sendViaUDP(byteMsg);
                 }
             }
 
@@ -268,8 +237,7 @@ public class NMS_Agent {
 
             // Enviar ACK ao servidor a confirmar a receção da tarefa (e confirmação do registo)
             byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
-            sendPacket = new DatagramPacket(byteMsg, byteMsg.length, serverIP, SERVER_UDP_PORT);
-            netTaskSocket.send(sendPacket);
+            connection.sendViaUDP(byteMsg);
         } catch (Exception e) {
             System.out.println("Erro ao enviar pacote de registo");
         }
