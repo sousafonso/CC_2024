@@ -1,5 +1,7 @@
 package agent;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.locks.Lock;
@@ -18,6 +20,8 @@ public class Connection {
     private InetAddress serverIP;
     private DatagramSocket netTaskSocket;
     private Socket tcpSocket;
+    private DataOutputStream tcpOut;
+    private DataInputStream tcpIn;
 
     public Connection() {
         try {
@@ -70,13 +74,55 @@ public class Connection {
         return packet.getData();
     }
 
-    public void sendViaTCP(byte[] data){}
+    public void sendViaTCP(byte[] data){
+        netTaskSendLock.lock();
+        try {
+            if (tcpSocket.isClosed()) {
+                tcpSocket = new Socket(serverIP, SERVER_TCP_PORT);
+                tcpOut = new DataOutputStream(tcpSocket.getOutputStream());
+            }
+            tcpOut.writeInt(data.length); // Envia o tamanho dos dados primeiro
+            tcpOut.write(data); // Envia os dados
+            tcpOut.flush();
+        } catch (IOException e) {
+            System.out.println("Erro ao enviar dados via TCP para o servidor.");
+            e.printStackTrace();
+        } finally {
+            netTaskSendLock.unlock();
+        }
+    }
 
-    public void receiveViaTCP(byte[] data){}
+    public byte[] receiveViaTCP(){
+        netTaskReceiveLock.lock();
+        try {
+            if (tcpSocket.isClosed()) {
+                tcpSocket = new Socket(serverIP, SERVER_TCP_PORT);
+                tcpIn = new DataInputStream(tcpSocket.getInputStream());
+            }
+            int length = tcpIn.readInt(); // Lê o tamanho dos dados
+            byte[] data = new byte[length];
+            tcpIn.readFully(data); // Lê os dados
+            return data;
+        } catch (IOException e) {
+            System.out.println("Erro ao receber dados via TCP do servidor.");
+            e.printStackTrace();
+            return null;
+        } finally {
+            netTaskReceiveLock.unlock();
+        }
+    }
 
-    public void close(){
+    public void close() {
         if (netTaskSocket != null && !netTaskSocket.isClosed()) {
             netTaskSocket.close();
+        }
+        if (tcpSocket != null && !tcpSocket.isClosed()) {
+            try {
+                tcpSocket.close();
+            } catch (IOException e) {
+                System.out.println("Erro ao fechar o socket TCP.");
+                e.printStackTrace();
+            }
         }
     }
 }

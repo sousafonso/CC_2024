@@ -143,6 +143,61 @@ public class NMS_Agent {
         // adicionar ao map quando se manda a mensagem
     }
 
+    //PROPOSTA PARA processTask
+    // private void processTask() {
+    //     // Coletar métricas locais
+    //     for (LocalMetric localMetric : task.getLocalMetrics()) {
+    //         double result;
+    //         switch (localMetric.getMetricName()) {
+    //             case CPU_USAGE:
+    //                 result = localMetric.collectCpuUsage();
+    //                 break;
+    //             case RAM_USAGE:
+    //                 result = localMetric.collectRamUsage();
+    //                 break;
+    //             case INTERFACE_STATS:
+    //                 result = Double.parseDouble(localMetric.collectInterfaceStats());
+    //                 break;
+    //             default:
+    //                 throw new IllegalArgumentException("Métrica desconhecida: " + localMetric.getMetricName());
+    //         }
+    //         sendTaskResult(new TaskResult(task.getId(), localMetric.getMetricName(), result));
+    //     }
+
+    //     // Coletar métricas de link
+    //     for (LinkMetric linkMetric : task.getLinkMetrics()) {
+    //         double result;
+    //         switch (linkMetric.getMetricName()) {
+    //             case LATENCY:
+    //                 result = linkMetric.calculateLatency();
+    //                 break;
+    //             case JITTER:
+    //                 result = linkMetric.calculateJitter();
+    //                 break;
+    //             case PACKET_LOSS:
+    //                 result = linkMetric.calculatePacketLoss();
+    //                 break;
+    //             default:
+    //                 throw new IllegalArgumentException("Métrica desconhecida: " + linkMetric.getMetricName());
+    //         }
+    //         sendTaskResult(new TaskResult(task.getId(), linkMetric.getMetricName(), result));
+    //     }
+    // }
+
+    // private void sendTaskResult(TaskResult taskResult) {
+    //     try {
+    //         int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+    //         Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
+    //         byte[] byteMsg = msg.getPDU();
+    //         connection.sendViaUDP(byteMsg);
+
+    //         // Adicionar à lista de espera por ACK
+    //         waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
+    //     } catch (IOException e) {
+    //         System.err.println("Erro ao enviar resultado da tarefa");
+    //         e.printStackTrace();
+    //     }
+    // }
     // private void start() {
     //      try {
     //          Message msg = registerAgent();
@@ -249,57 +304,4 @@ public class NMS_Agent {
         agent.start();
     }
 
-    /*
-    // APENAS UM EXEMPLO
-    private void checkCriticalConditions() {
-        // Exemplo de coleta de métricas
-        double cpuUsage = metricCollector.collectCpuUsage();
-        double ramUsage = metricCollector.collectRamUsage();
-        int interfacePps = metricCollector.collectInterfacePps();
-        double packetLoss = metricCollector.collectPacketLoss();
-        int jitter = metricCollector.collectJitter();
-
-        if (cpuUsage > CPU_USAGE_LIMIT) {
-            sendAlert(new Notification(agentId, "CPU usage exceeded: " + cpuUsage + "%"));
-        }
-        if (ramUsage > RAM_USAGE_LIMIT) {
-            sendAlert(new Notification(agentId, "RAM usage exceeded: " + ramUsage + "%"));
-        }
-        if (interfacePps > INTERFACE_PPS_LIMIT) {
-            sendAlert(new Notification(agentId, "Interface PPS exceeded: " + interfacePps + " pps"));
-        }
-        if (packetLoss > PACKET_LOSS_LIMIT) {
-            sendAlert(new Notification(agentId, "Packet loss exceeded: " + packetLoss + "%"));
-        }
-        if (jitter > JITTER_LIMIT) {
-            sendAlert(new Notification(agentId, "Jitter exceeded: " + jitter + " ms"));
-        }
-    }
-
-    private void sendAlert(Notification notification) {
-        try (Socket socket = new Socket(serverIP, SERVER_TCP_PORT);
-             OutputStream output = socket.getOutputStream();
-             PrintWriter writer = new PrintWriter(output, true)) {
-            writer.println("Alerta: " + notification.getNotificationId() + " - " + notification.getMessage());
-            System.out.println("Alerta enviado via TCP: " + notification.getNotificationId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void startAlertMonitoring() {
-        new Thread(() -> {
-            while (true) {
-                if (checkCriticalConditions()) {
-                    Notification alert = new Notification(agentId, "Critical condition met!");
-                    alertFlowClient.sendAlert(alert);
-                }
-                try {
-                    Thread.sleep(10000); // Checa condições a cada 10 segundos
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }*/
 }

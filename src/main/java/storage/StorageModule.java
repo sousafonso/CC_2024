@@ -15,26 +15,29 @@ import message.Notification;
 import message.TaskResult;
 
 public class StorageModule {
-    private Map<String, TaskResult> taskResults = new HashMap<>();
-    private Map<String, Notification> alerts = new HashMap<>();
+    private Map<String, Map<String, TaskResult>> clientTaskResults = new HashMap<>();
+    private Map<String, Map<String, Notification>> clientAlerts = new HashMap<>();
 
     // Armazena métricas
-    public synchronized void storeTaskResult(String taskId, TaskResult result) {
-        taskResults.put(taskId, result);
-        System.out.println("Métrica armazenada para Task ID: " + taskId);
+    public synchronized void storeTaskResult(String clientId, String taskId, TaskResult result) {
+        clientTaskResults.computeIfAbsent(clientId, k -> new HashMap<>()).put(taskId, result);
+        System.out.println("Métrica armazenada para Task ID: " + taskId + " do cliente: " + clientId);
     }
 
     // Armazena alertas
-    public synchronized void storeAlert(String alertId, Notification alert) {
-        alerts.put(alertId, alert);
-        System.out.println("Alerta armazenado: " + alertId);
+    public synchronized void storeAlert(String clientId, String alertId, Notification alert) {
+        clientAlerts.computeIfAbsent(clientId, k -> new HashMap<>()).put(alertId, alert);
+        System.out.println("Alerta armazenado: " + alertId + " do cliente: " + clientId);
     }
 
-    // Exibe todas as métricas e alertas
-    public void displayMetrics() {
-        System.out.println("----- Métricas -----");
-        //taskResults.forEach((k, v) -> System.out.println(k + ": " + v.getResultData()));
-        System.out.println("----- Alertas -----");
-        //alerts.forEach((k, v) -> System.out.println(k + ": " + v.getMessage()));
+    // Exibe todas as métricas e alertas de um cliente
+    public void displayMetricsAndAlerts(String clientId) {
+        System.out.println("----- Métricas para o cliente: " + clientId + " -----");
+        clientTaskResults.getOrDefault(clientId, new HashMap<>()).forEach((taskId, taskResult) -> 
+            System.out.println("Task ID: " + taskId + ", Result: " + taskResult.getResult()));
+
+        System.out.println("----- Alertas para o cliente: " + clientId + " -----");
+        clientAlerts.getOrDefault(clientId, new HashMap<>()).forEach((alertId, alert) -> 
+            System.out.println("Alert ID: " + alertId + ", Message: " + alert.getMessage()));
     }
 }
