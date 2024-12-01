@@ -124,7 +124,7 @@ public class NMS_Server {
 
     private void startMetricDisplayScheduler() {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(() -> storageModule.displayMetricsAndAlerts("default"), 0, 10, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(() -> storageModule.displayMetricsAndAlerts("default"), 0, 10, TimeUnit.SECONDS); // ver "default"
     }
 
     public static void main(String[] args) {
