@@ -85,10 +85,11 @@ public class NetTaskServerHandler implements Runnable {
         sendReply(reply);
     }
 
-    private void processTaskResult(Message msg){
+    private void processTaskResult(Message msg) {
         System.out.println("Task Result Received: " + msg.toString());
         TaskResult taskResult = (TaskResult) msg.getData();
-        storageModule.storeTaskResult(taskResult.getTaskId(), taskResult);
+        String taskId = taskResult.getTaskId();
+        storageModule.storeTaskResult(taskId, taskId, taskResult);
     }
 
     private void processAck(Message msg){
