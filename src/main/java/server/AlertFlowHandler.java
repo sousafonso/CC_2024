@@ -35,8 +35,8 @@ public class AlertFlowHandler implements Runnable {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String receivedData = reader.readLine();
                 Notification notification = new Notification(receivedData.split(";"));
-                storageModule.storeAlert(notification.getNotificationId(), receivedData, notification);
-                System.out.println("Alerta recebido: " + notification.getMessage());
+                storageModule.storeAlert(notification.getTaskID(), receivedData, notification);
+                System.out.println("Alerta recebido: " + notification.getMeasurement());
             }
         } catch (Exception e) {
             e.printStackTrace();

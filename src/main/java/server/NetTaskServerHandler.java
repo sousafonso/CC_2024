@@ -47,7 +47,6 @@ public class NetTaskServerHandler implements Runnable {
             try {
                  socket = new DatagramSocket();
                  byte[] buffer = msg.getPDU();
-
                  DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, this.packet.getAddress(), this.packet.getPort());
                  socket.send(sendPacket);
             } catch (IOException e) {
@@ -62,15 +61,18 @@ public class NetTaskServerHandler implements Runnable {
 
     // Processa a mensagem recebida e executa a ação correspondente
     private void processRegister(Message msg){
+        System.out.println("Recebido registo de " + packet.getAddress());
         Message reply;
         String sourceAddress = packet.getAddress().getHostAddress();
         Task agentTask = tasks.get(sourceAddress);
         int newSeqNumber = msg.getSeqNumber() + 1;
 
         if(agentTask == null){
+            System.out.println("A responder a registo com ACK para " + packet.getAddress());
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Ack, null);
         }
         else{
+            System.out.println("A responder a registo com TASK para " + packet.getAddress());
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Task, agentTask);
         }
 
@@ -86,13 +88,15 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     private void processTaskResult(Message msg) {
-        System.out.println("Task Result Received: " + msg.toString());
+        System.out.println("Task Result Received from " + packet.getAddress()+ " : " + msg.toString());
         TaskResult taskResult = (TaskResult) msg.getData();
         String taskId = taskResult.getTaskId();
         storageModule.storeTaskResult(taskId, taskId, taskResult);
+        sendReply(new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null));
     }
 
     private void processAck(Message msg){
+        System.out.println("Ack Received from " + packet.getAddress());
         String sourceAddress = packet.getAddress().getHostAddress();
         int ackNumber = msg.getAckNumber();
 

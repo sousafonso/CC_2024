@@ -38,6 +38,6 @@ public class StorageModule {
 
         System.out.println("----- Alertas para o cliente: " + clientId + " -----");
         clientAlerts.getOrDefault(clientId, new HashMap<>()).forEach((alertId, alert) -> 
-            System.out.println("Alert ID: " + alertId + ", Message: " + alert.getMessage()));
+            System.out.println("Alert ID: " + alertId + ", Message: " + alert.getMeasurement()));
     }
 }

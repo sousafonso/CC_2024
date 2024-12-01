@@ -23,10 +23,9 @@ public class AlertFlowListener implements Runnable{
             System.out.println("AlertFlowListener iniciado na porta " + tcpPort);
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("AlertFlow conectado: " + socket.getInetAddress().getHostAddress());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String receivedData = reader.readLine();
-                System.out.println("Recebido: " + receivedData);
+                System.out.println("Notificação recebida: " + receivedData);
             }
         } catch (Exception e) {
             e.printStackTrace();
