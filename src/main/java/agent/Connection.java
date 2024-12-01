@@ -1,8 +1,8 @@
 package agent;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import message.Message;
+
+import java.io.*;
 import java.net.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -16,12 +16,14 @@ public class Connection {
 
     private Lock netTaskSendLock = new ReentrantLock();
     private Lock netTaskReceiveLock = new ReentrantLock();
+    private Lock alertFlowSendLock = new ReentrantLock();
+    private Lock alertFlowReceiveLock = new ReentrantLock();
 
     private InetAddress serverIP;
     private DatagramSocket netTaskSocket;
-    private Socket tcpSocket;
-    private DataOutputStream tcpOut;
-    private DataInputStream tcpIn;
+    private Socket alertFlowSocket;
+    private DataOutputStream alertFlowOut;
+    private DataInputStream alertFlowIn;
 
     public Connection() {
         try {
@@ -33,10 +35,14 @@ public class Connection {
         try {
             this.netTaskSocket = new DatagramSocket(UDP_PORT);
             this.netTaskSocket.setSoTimeout(TIMEOUT);
-            this.tcpSocket = new Socket();
-        }
-        catch (SocketException e) {
+            this.alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT);
+            this.alertFlowSocket.setSoTimeout(TIMEOUT);
+            this.alertFlowIn = new DataInputStream(new BufferedInputStream(this.alertFlowSocket.getInputStream()));
+            this.alertFlowOut = new DataOutputStream(new BufferedOutputStream(this.alertFlowSocket.getOutputStream()));
+        } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
+        } catch (IOException e) {
+            System.out.println("Erro ao criar AlertFlow Streams");
         }
     }
 
@@ -53,7 +59,7 @@ public class Connection {
         }
     }
 
-    public byte[] receiveViaUDP() throws SocketTimeoutException{
+    public Message receiveViaUDP() throws SocketTimeoutException{
         byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data, data.length);
 
@@ -68,61 +74,48 @@ public class Connection {
             System.out.println("Erro ao receber pacote via UDP do servidor.");
         }
         finally {
-             netTaskReceiveLock.unlock();
+            netTaskReceiveLock.unlock();
         }
 
-        return packet.getData();
+        return new Message(packet.getData(), packet.getLength());
     }
 
     public void sendViaTCP(byte[] data){
-        netTaskSendLock.lock();
-        try {
-            if (tcpSocket.isClosed()) {
-                tcpSocket = new Socket(serverIP, SERVER_TCP_PORT);
-                tcpOut = new DataOutputStream(tcpSocket.getOutputStream());
-            }
-            tcpOut.writeInt(data.length); // Envia o tamanho dos dados primeiro
-            tcpOut.write(data); // Envia os dados
-            tcpOut.flush();
+        alertFlowSendLock.lock();
+        try{
+            alertFlowOut.write(data.length);
+            alertFlowOut.write(data);
+            alertFlowOut.flush();
         } catch (IOException e) {
-            System.out.println("Erro ao enviar dados via TCP para o servidor.");
-            e.printStackTrace();
-        } finally {
-            netTaskSendLock.unlock();
+            System.out.println("Erro ao enviar notificação de alerta ao servidor");
+        }
+        finally {
+            alertFlowSendLock.unlock();
         }
     }
 
-    public byte[] receiveViaTCP(){
-        netTaskReceiveLock.lock();
+    public Message receiveViaTCP(){
+        byte[] data = new byte[1024];
+        int read = 0;
+
+        alertFlowReceiveLock.lock();
         try {
-            if (tcpSocket.isClosed()) {
-                tcpSocket = new Socket(serverIP, SERVER_TCP_PORT);
-                tcpIn = new DataInputStream(tcpSocket.getInputStream());
-            }
-            int length = tcpIn.readInt(); // Lê o tamanho dos dados
-            byte[] data = new byte[length];
-            tcpIn.readFully(data); // Lê os dados
-            return data;
-        } catch (IOException e) {
-            System.out.println("Erro ao receber dados via TCP do servidor.");
-            e.printStackTrace();
-            return null;
-        } finally {
-            netTaskReceiveLock.unlock();
+            int length = alertFlowIn.readInt();
+            read = alertFlowIn.read(data, 0, length);
         }
+        catch (IOException e) {
+            System.out.println("Erro ao ler AlertFlow do servidor");
+        }
+        finally {
+            alertFlowReceiveLock.unlock();
+        }
+
+        return new Message(data, read);
     }
 
-    public void close() {
+    public void close(){
         if (netTaskSocket != null && !netTaskSocket.isClosed()) {
             netTaskSocket.close();
-        }
-        if (tcpSocket != null && !tcpSocket.isClosed()) {
-            try {
-                tcpSocket.close();
-            } catch (IOException e) {
-                System.out.println("Erro ao fechar o socket TCP.");
-                e.printStackTrace();
-            }
         }
     }
 }

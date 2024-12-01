@@ -54,7 +54,7 @@ public class NMS_Server {
 
         // Distribuir tarefas para os agentes
         //distributeTasks(tasks);
-        Thread NetTaskListener = new Thread(new NetTaskServerListener(UDP_PORT, tasks));
+        Thread NetTaskListener = new Thread(new NetTaskServerListener(UDP_PORT, tasks, storageModule));
         Thread AlertFlowListener = new Thread(new AlertFlowListener(TCP_PORT, storageModule));
         NetTaskListener.start();
         AlertFlowListener.start();
