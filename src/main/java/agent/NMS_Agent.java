@@ -178,24 +178,21 @@ public class NMS_Agent {
             byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, new AgentRegister(agentId))).getPDU();
             connection.sendViaUDP(byteMsg);
 
-            // Packet para receber resposta
-            byte[] receiveMsg = new byte[1024];
-            DatagramPacket receivePacket = new DatagramPacket(receiveMsg, receiveMsg.length);
-
             // Esperar TIMEOUT, se não receber a tarefa (confirmação), enviar novamente o registo
             boolean waiting = true;
             for (int i = 0; waiting && i < MAX_RETRIES; i++) {
                 try {
-                    receiveMsg = connection.receiveViaUDP();
+                    msg = connection.receiveViaUDP();
                     waiting = false;
                 } catch (SocketTimeoutException e) {
                     connection.sendViaUDP(byteMsg);
                 }
             }
 
-            if (waiting) return null;
-
-            msg = new Message(receivePacket.getData(), receivePacket.getLength());
+            if (waiting){
+                System.out.println("Tentativas de registo no servidor excedidas");
+                return null;
+            }
 
             // Enviar ACK ao servidor a confirmar a receção da tarefa (e confirmação do registo)
             byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
@@ -217,11 +214,16 @@ public class NMS_Agent {
 
             this.task = (Task) msg.getData();
 
+            if(this.task == null){
+                System.out.println("Erro ao receber tarefa do servidror");
+                return;
+            }
+
             processConditions(this.task.getConditions());
             processTask();
 
             // Thread para receber ACKs
-            new Thread(() -> {
+            /*new Thread(() -> {
                 while (true) {
                     waitingAckLock.lock();
                     try {
@@ -238,9 +240,9 @@ public class NMS_Agent {
                         waitingAckLock.unlock();
                     }
                 }
-            }).start();
+            }).start();*/
         } finally {
-            connection.close();
+            //connection.close();
         }
     }
 

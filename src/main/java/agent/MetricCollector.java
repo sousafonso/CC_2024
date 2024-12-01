@@ -2,15 +2,19 @@ package agent;
 
 import message.Message;
 import message.MessageType;
+import message.Notification;
 import message.TaskResult;
 import taskContents.LinkMetric;
 import taskContents.LocalMetric;
 import taskContents.MetricName;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class MetricCollector implements Runnable {
@@ -128,14 +132,23 @@ public class MetricCollector implements Runnable {
         System.out.println("Link Metric: " + linkMetric.getMetricName() + " -> " + result);
     }
 
-    private void sendTaskResult(TaskResult taskResult) {
+    private void sendTaskResult(TaskResult taskResult, LocalDateTime timestamp) {
         int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
         Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
         byte[] byteMsg = msg.getPDU();
         connection.sendViaUDP(byteMsg);
 
         // Adicionar à lista de espera por ACK
-        NMS_Agent.addAckToList(LocalDateTime.now(), msg);
+        NMS_Agent.addAckToList(timestamp, msg);
+    }
+
+    private void sendAlertNotification(Notification notification) {
+        int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+        Message msg = new Message(seqNumber, 0, MessageType.Notification, notification);
+        byte[] byteMsg = msg.getPDU();
+        connection.sendViaTCP(byteMsg);
+
+        //TODO Lista de espera de ACKs (a mesma que netTask ou separada?)
     }
 
     public void run() {
@@ -152,9 +165,15 @@ public class MetricCollector implements Runnable {
         }
 
         if (result != Double.MIN_VALUE){
-            TaskResult taskResult = new TaskResult(taskID, name, result);
-            sendTaskResult(taskResult);
-            //TODO if result ultrapassar limite mandar notificação
+            LocalDateTime timestamp = LocalDateTime.now();
+            System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+            sendTaskResult(new TaskResult(taskID, name, result), timestamp);
+            if(this.alertValue >= 0){
+                if(result > this.alertValue){
+                    System.out.println("A enviar notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                    sendAlertNotification(new Notification(taskID, name, result, timestamp));
+                }
+            }
         }
     }
 }

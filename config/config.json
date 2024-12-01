@@ -2,7 +2,7 @@
   "tasks": [
     {
       "taskId": "task-001",
-      "frequency": 30,
+      "frequency": 20,
       "devices": [
         {
           "deviceId": "10.0.0.1",

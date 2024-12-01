@@ -35,9 +35,10 @@ public class NetTaskServerHandler implements Runnable {
     private DatagramPacket packet;
     private StorageModule storageModule;
 
-    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks) {
+    public NetTaskServerHandler(DatagramPacket packet, Map<String, Task> tasks, StorageModule storageModule) {
         this.packet = packet;
         this.tasks = tasks;
+        this.storageModule = storageModule;
     }
 
     // Envia resposta relativamente a uma mensagem recebida (ack, erro, etc) 
