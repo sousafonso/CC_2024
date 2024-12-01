@@ -62,17 +62,26 @@ public class NMS_Agent {
     private final int TIMEOUT = 1000; // 1 segundo
 
     private Connection connection;
+    private static Lock waitingAckLock = new ReentrantLock();
     private Map<MetricName, Integer> alertValues;
-    private List<MetricResult> waitingAck;
+    private static List<MetricResult> waitingAck = new ArrayList<>();
     private Task task;
     private String agentId;
-    private Lock lock = new ReentrantLock();
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
         this.connection = new Connection();
         this.alertValues = new HashMap<>();
-        this.waitingAck = new ArrayList<>();
+    }
+
+    public static void addAckToList(LocalDateTime timeSent, Message taskResult) {
+        waitingAckLock.lock();
+        try{
+            waitingAck.add(new MetricResult(timeSent, taskResult));
+        }
+        finally {
+            waitingAckLock.unlock();
+        }
     }
 
     private void processConditions(Conditions conditions) {
@@ -111,11 +120,11 @@ public class NMS_Agent {
 
         for (LocalMetric localMetric : localMetrics) {
             System.out.println("Teste -> " + localMetric);
-            executor.scheduleAtFixedRate(new MetricCollector(localMetric, null), 0, frequency, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, localMetric, null), 0, frequency, TimeUnit.SECONDS);
         }
 
         for (LinkMetric linkMetric : linkMetrics) {
-            executor.scheduleAtFixedRate(new MetricCollector(null, linkMetric), 0, frequency, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
         }
 
         //thread a receber acks
@@ -132,16 +141,6 @@ public class NMS_Agent {
         // se não n fazer nada, esperar
         // quando se receber um ack, ir ao map remover a entrada
         // adicionar ao map quando se manda a mensagem
-    }
-
-    private void sendTaskResult(TaskResult taskResult) {
-        int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
-        Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
-        byte[] byteMsg = msg.getPDU();
-        connection.sendViaUDP(byteMsg);
-
-        // Adicionar à lista de espera por ACK
-        waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
     }
 
     // private void start() {
@@ -171,44 +170,7 @@ public class NMS_Agent {
     //      }
     //  }
 
-    private void start() {
-        try {
-            Message msg = registerAgent();
-            if (msg == null) {
-                System.out.println("Erro ao registar agente no servidor");
-                return;
-            }
-
-            this.task = (Task) msg.getData();
-
-            processConditions(this.task.getConditions());
-            processTask();
-
-            // Thread para receber ACKs
-            new Thread(() -> {
-                while (true) {
-                    lock.lock();
-                    try {
-                        Iterator<MetricResult> iterator = waitingAck.iterator();
-                        while (iterator.hasNext()) {
-                            MetricResult pair = iterator.next();
-                            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
-                                // Reenviar mensagem
-                                connection.sendViaUDP(pair.getTaskResult().getPDU());
-                                pair.setTimeSent(LocalDateTime.now());
-                            }
-                        }
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            }).start();
-        } finally {
-            connection.close();
-        }
-    }
-
-     private Message registerAgent() {
+    private Message registerAgent() {
         Message msg = null;
         try {
             // Enviar pacote de registo ao servidor
@@ -243,6 +205,43 @@ public class NMS_Agent {
         }
 
         return msg;
+    }
+
+    private void start() {
+        try {
+            Message msg = registerAgent();
+            if (msg == null) {
+                System.out.println("Erro ao registar agente no servidor");
+                return;
+            }
+
+            this.task = (Task) msg.getData();
+
+            processConditions(this.task.getConditions());
+            processTask();
+
+            // Thread para receber ACKs
+            new Thread(() -> {
+                while (true) {
+                    waitingAckLock.lock();
+                    try {
+                        Iterator<MetricResult> iterator = waitingAck.iterator();
+                        while (iterator.hasNext()) {
+                            MetricResult pair = iterator.next();
+                            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
+                                // Reenviar mensagem
+                                connection.sendViaUDP(pair.getTaskResult().getPDU());
+                                pair.setTimeSent(LocalDateTime.now());
+                            }
+                        }
+                    } finally {
+                        waitingAckLock.unlock();
+                    }
+                }
+            }).start();
+        } finally {
+            connection.close();
+        }
     }
 
     public static void main(String[] args) {

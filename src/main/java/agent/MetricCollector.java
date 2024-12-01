@@ -1,36 +1,48 @@
 package agent;
 
+import message.Message;
+import message.MessageType;
 import message.TaskResult;
 import taskContents.LinkMetric;
 import taskContents.LocalMetric;
+import taskContents.MetricName;
 
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class MetricCollector implements Runnable {
+    private Connection connection;
+    private String taskID;
+    private int alertValue;
     private LocalMetric localMetric;
     private LinkMetric linkMetric;
 
-    public MetricCollector(LocalMetric localMetric, LinkMetric linkMetric) {
+    public MetricCollector(Connection connection, String taskID, int alertValue, LocalMetric localMetric, LinkMetric linkMetric) {
+        this.connection = connection;
+        this.taskID = taskID;
+        this.alertValue = alertValue;
         this.localMetric = localMetric;
         this.linkMetric = linkMetric;
     }
 
-    private void collectCpuUsage() {
+    private double collectCpuUsage() {
         String command = "top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'";
-        System.out.println("CPU Usage: " + executeCommand(List.of("sh",
+        return Double.parseDouble(executeCommand(List.of("sh",
                 "-c",
                 command.replaceAll("\\\\[$]", "\\$"))));
     }
 
-    private void collectRAMUsage() {
+    private double collectRAMUsage() {
         String command = "free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'";
-        System.out.println("RAM Usage: " + executeCommand(List.of("sh",
+        return Double.parseDouble(executeCommand(List.of("sh",
                 "-c",
                 command.replaceAll("\\\\[$]", "\\$"))));
     }
 
-    public long collectPackets(String interfaceName) throws IOException {
+    public double collectPackets(String interfaceName) throws IOException {
         String statsPath = "/proc/net/dev";
         try (BufferedReader br = new BufferedReader(new FileReader(statsPath))) {
             String line;
@@ -70,19 +82,19 @@ public class MetricCollector implements Runnable {
         return output.toString();
     }
 
-    public void processLocalMetric(){
+    public double processLocalMetric(){
+        double result = Double.MIN_VALUE;
         switch(localMetric.getMetricName()){
             case CPU_USAGE:
-                collectCpuUsage();
+                result = collectCpuUsage();
                 break;
             case RAM_USAGE:
-                collectRAMUsage();
+                result = collectRAMUsage();
                 break;
             case INTERFACE_STATS:
-                //TODO precisa de verificação
                 for(String anInterface : localMetric.getInterfaces()) {
                     try {
-                        collectPackets(anInterface);
+                        result = collectPackets(anInterface);
                     } catch (IOException e) {
                         System.out.println("Erro ao medir pacotes por segundo na interface " + anInterface);
                     }
@@ -92,11 +104,8 @@ public class MetricCollector implements Runnable {
                 System.out.println("Erro ao coletar métrica local " + localMetric.getMetricName());
             break;
         }
-        //TODO
-        // processar tarefa
-        // switch para cada tipo de tarefa
-        // pegar no resultado
-        // mandar resultado
+
+        return result;
     }
 
     public void processLinkMetric(){
@@ -119,12 +128,33 @@ public class MetricCollector implements Runnable {
         System.out.println("Link Metric: " + linkMetric.getMetricName() + " -> " + result);
     }
 
+    private void sendTaskResult(TaskResult taskResult) {
+        int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
+        Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
+        byte[] byteMsg = msg.getPDU();
+        connection.sendViaUDP(byteMsg);
+
+        // Adicionar à lista de espera por ACK
+        NMS_Agent.addAckToList(LocalDateTime.now(), msg);
+    }
+
     public void run() {
+        double result;
+        MetricName name;
         if (localMetric != null) {
-            processLocalMetric();
+            result = processLocalMetric();
+            name = localMetric.getMetricName();
         }
         else{
-            //processLinkMetric();
+            result = 0;
+            //result = processLinkMetric();
+            name = linkMetric.getMetricName();
+        }
+
+        if (result != Double.MIN_VALUE){
+            TaskResult taskResult = new TaskResult(taskID, name, result);
+            sendTaskResult(taskResult);
+            //TODO if result ultrapassar limite mandar notificação
         }
     }
 }
