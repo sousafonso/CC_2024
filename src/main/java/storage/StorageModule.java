@@ -15,6 +15,7 @@ import message.Notification;
 import message.TaskResult;
 
 public class StorageModule {
+    //TODO Tratar isto do storage
     private Map<String, Map<String, TaskResult>> clientTaskResults = new HashMap<>();
     private Map<String, Map<String, Notification>> clientAlerts = new HashMap<>();
 

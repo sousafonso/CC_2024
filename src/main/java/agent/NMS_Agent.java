@@ -8,21 +8,19 @@
     Monitorizar condições críticas e enviar alertas quando necessário.
  */
 
- package agent;
+package agent;
 
- import message.*;
- import taskContents.*;
- 
- import java.io.IOException;
- import java.net.*;
- import java.time.Duration;
- import java.time.LocalDateTime;
- import java.util.*;
+import message.*;
+import taskContents.*;
+
+import java.net.*;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
- import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class NMS_Agent {
     private static class MetricResult {
@@ -127,6 +125,7 @@ public class NMS_Agent {
             executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
         }
 
+        //TODO ver isto que ainda tem a ver com ACKs
         //thread a receber acks
         //while true
         for (MetricResult pair : this.waitingAck) {
@@ -142,88 +141,6 @@ public class NMS_Agent {
         // quando se receber um ack, ir ao map remover a entrada
         // adicionar ao map quando se manda a mensagem
     }
-
-    //PROPOSTA PARA processTask
-    // private void processTask() {
-    //     // Coletar métricas locais
-    //     for (LocalMetric localMetric : task.getLocalMetrics()) {
-    //         double result;
-    //         switch (localMetric.getMetricName()) {
-    //             case CPU_USAGE:
-    //                 result = localMetric.collectCpuUsage();
-    //                 break;
-    //             case RAM_USAGE:
-    //                 result = localMetric.collectRamUsage();
-    //                 break;
-    //             case INTERFACE_STATS:
-    //                 result = Double.parseDouble(localMetric.collectInterfaceStats());
-    //                 break;
-    //             default:
-    //                 throw new IllegalArgumentException("Métrica desconhecida: " + localMetric.getMetricName());
-    //         }
-    //         sendTaskResult(new TaskResult(task.getId(), localMetric.getMetricName(), result));
-    //     }
-
-    //     // Coletar métricas de link
-    //     for (LinkMetric linkMetric : task.getLinkMetrics()) {
-    //         double result;
-    //         switch (linkMetric.getMetricName()) {
-    //             case LATENCY:
-    //                 result = linkMetric.calculateLatency();
-    //                 break;
-    //             case JITTER:
-    //                 result = linkMetric.calculateJitter();
-    //                 break;
-    //             case PACKET_LOSS:
-    //                 result = linkMetric.calculatePacketLoss();
-    //                 break;
-    //             default:
-    //                 throw new IllegalArgumentException("Métrica desconhecida: " + linkMetric.getMetricName());
-    //         }
-    //         sendTaskResult(new TaskResult(task.getId(), linkMetric.getMetricName(), result));
-    //     }
-    // }
-
-    // private void sendTaskResult(TaskResult taskResult) {
-    //     try {
-    //         int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
-    //         Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
-    //         byte[] byteMsg = msg.getPDU();
-    //         connection.sendViaUDP(byteMsg);
-
-    //         // Adicionar à lista de espera por ACK
-    //         waitingAck.add(new MetricResult(LocalDateTime.now(), msg));
-    //     } catch (IOException e) {
-    //         System.err.println("Erro ao enviar resultado da tarefa");
-    //         e.printStackTrace();
-    //     }
-    // }
-    // private void start() {
-    //      try {
-    //          Message msg = registerAgent();
-    //          if(msg == null){
-    //              System.out.println("Erro ao registar agente no servidor");
-    //              return;
-    //          }
-
-    //          this.task = (Task) msg.getData();
-
-    //          processConditions(this.task.getConditions());
-    //          processTask();
-
-    //          //while true
-    //          // esperar algum tempo para fazer verificação?
-    //          for(MetricResult pair : this.waitingAck){
-    //              //if(diferença timestam e data atual maior que time out)
-    //              //  mandar mensagem de novo pela connection
-    //          }
-    //      }
-    //      finally{
-    //          if(netTaskSocket != null && !netTaskSocket.isClosed()){
-    //              netTaskSocket.close();
-    //          }
-    //      }
-    //  }
 
     private Message registerAgent() {
         Message msg = null;
@@ -276,6 +193,8 @@ public class NMS_Agent {
 
             processConditions(this.task.getConditions());
             processTask();
+
+            //TODO tratamento de ACKs no cliente (receção e envio de mensagem em falta de ACK)
 
             // Thread para receber ACKs
             /*new Thread(() -> {

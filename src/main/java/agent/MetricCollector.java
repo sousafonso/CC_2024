@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MetricCollector implements Runnable {
     private Connection connection;
@@ -46,7 +48,7 @@ public class MetricCollector implements Runnable {
                 command.replaceAll("\\\\[$]", "\\$"))));
     }
 
-    public double collectPackets(String interfaceName) throws IOException {
+    private double collectPackets(String interfaceName) throws IOException {
         String statsPath = "/proc/net/dev";
         try (BufferedReader br = new BufferedReader(new FileReader(statsPath))) {
             String line;
@@ -70,25 +72,23 @@ public class MetricCollector implements Runnable {
             ProcessBuilder processBuilder = new ProcessBuilder(command); // ProcessBuilder é uma classe que permite a criação de processos
             Process process = processBuilder.start(); // start() inicia o processo
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line);
-                }
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
             }
 
             process.waitFor(); // waitFor() faz com que o processo atual aguarde a conclusão do processo representado por este Process
         } catch (Exception e) {
-            e.printStackTrace();
             output.append("Error executing command: ").append(command);
         }
 
         return output.toString();
     }
 
-    public double processLocalMetric(){
+    public double processLocalMetric() throws RuntimeException{
         double result = Double.MIN_VALUE;
-        switch(localMetric.getMetricName()){
+        switch (localMetric.getMetricName()) {
             case CPU_USAGE:
                 result = collectCpuUsage();
                 break;
@@ -96,7 +96,7 @@ public class MetricCollector implements Runnable {
                 result = collectRAMUsage();
                 break;
             case INTERFACE_STATS:
-                for(String anInterface : localMetric.getInterfaces()) {
+                for (String anInterface : localMetric.getInterfaces()) {
                     try {
                         result = collectPackets(anInterface);
                     } catch (IOException e) {
@@ -106,30 +106,115 @@ public class MetricCollector implements Runnable {
                 break;
             default:
                 System.out.println("Erro ao coletar métrica local " + localMetric.getMetricName());
-            break;
+                break;
         }
 
         return result;
     }
 
-    public void processLinkMetric(){
-        //TODO
-        double result;
+    private double calculateJitter() {
+        return executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
+    }
+
+    private double calculatePacketLoss() {
+        return executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
+    }
+
+    private double calculateLatency() {
+        return executePingCommand(List.of("ping", "-c", "4", linkMetric.getDestination()));
+    }
+
+    private double executePingCommand(List<String> command) {
+        //TODO requer teste em linux
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            Process process = processBuilder.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            Pattern latencyPattern = Pattern.compile("time=([0-9.]+)\\s*ms");
+
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = latencyPattern.matcher(line);
+                if (matcher.find()) {
+                    return Double.parseDouble(matcher.group(1));
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                System.err.println("Ping failed with exit code: " + exitCode);
+                throw new RuntimeException();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error executing command: " + command);
+            return Double.MIN_VALUE;
+        }
+
+        return Double.MIN_VALUE;
+    }
+
+    private double executeIperfCommand(List<String> command) {
+        //TODO rever iperf (packet loss e jitter)
+        StringBuilder output = new StringBuilder();
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            Process process = processBuilder.start();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+            output.append("Error executing command: ").append(command);
+        }
+
+        // Parse the output to extract the jitter or packet loss value
+        String[] lines = output.toString().split("\n");
+        for (String line : lines) {
+            if (line.contains("jitter")) {
+                String[] parts = line.split(",");
+                for (String part : parts) {
+                    if (part.contains("jitter")) {
+                        return Double.parseDouble(part.split(":")[1].trim());
+                    }
+                }
+            } else if (line.contains("lost")) {
+                String[] parts = line.split(",");
+                for (String part : parts) {
+                    if (part.contains("lost")) {
+                        return Double.parseDouble(part.split(":")[1].trim());
+                    }
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    public double processLinkMetric() throws RuntimeException {
+        double result = Double.MIN_VALUE;
         switch (linkMetric.getMetricName()) {
             case LATENCY:
-                result = linkMetric.calculateLatency();
+                result = calculateLatency();
                 break;
             case JITTER:
-                result = linkMetric.calculateJitter();
+                result = calculateJitter();
                 break;
             case PACKET_LOSS:
-                result = linkMetric.calculatePacketLoss();
+                result = calculatePacketLoss();
                 break;
             default:
-                throw new IllegalArgumentException("Métrica desconhecida: " + linkMetric.getMetricName());
+                System.out.println("Erro ao coletar métrica local " + localMetric.getMetricName());
+                break;
         }
-        //sendTaskResult(new TaskResult(task.getId(), linkMetric.getMetricName(), String.valueOf(result)));
-        System.out.println("Link Metric: " + linkMetric.getMetricName() + " -> " + result);
+
+        return result;
     }
 
     private void sendTaskResult(TaskResult taskResult, LocalDateTime timestamp) {
@@ -152,28 +237,30 @@ public class MetricCollector implements Runnable {
     }
 
     public void run() {
-        double result;
-        MetricName name;
-        if (localMetric != null) {
-            result = processLocalMetric();
-            name = localMetric.getMetricName();
-        }
-        else{
-            result = 0;
-            //result = processLinkMetric();
-            name = linkMetric.getMetricName();
-        }
+        try {
+            double result;
+            MetricName name;
+            if (localMetric != null) {
+                result = processLocalMetric();
+                name = localMetric.getMetricName();
+            } else {
+                result = processLinkMetric();
+                name = linkMetric.getMetricName();
+            }
 
-        if (result != Double.MIN_VALUE){
-            LocalDateTime timestamp = LocalDateTime.now();
-            System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
-            sendTaskResult(new TaskResult(taskID, name, result), timestamp);
-            if(this.alertValue >= 0){
-                if(result > this.alertValue){
-                    System.out.println("A enviar notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
-                    sendAlertNotification(new Notification(taskID, name, result, timestamp));
+            if (result != Double.MIN_VALUE) {
+                LocalDateTime timestamp = LocalDateTime.now();
+                System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                sendTaskResult(new TaskResult(taskID, name, result), timestamp);
+                if (this.alertValue >= 0) {
+                    if (result > this.alertValue) {
+                        System.out.println("A enviar notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                        sendAlertNotification(new Notification(taskID, name, result, timestamp));
+                    }
                 }
             }
+        } catch (RuntimeException e) {
+            System.out.println("Erro ao executar os comandos para coletar as métricas");
         }
     }
 }

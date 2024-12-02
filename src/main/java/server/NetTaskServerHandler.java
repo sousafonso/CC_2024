@@ -77,6 +77,8 @@ public class NetTaskServerHandler implements Runnable {
         }
 
         lock.lock();
+        //TODO tratamento destes ACKs depois de enviar uma tarefa
+        // (uma classe com o timestamp e timeouts como no agent ? ou uma thread aqui à espera e a mandar novamente se necessário)
         try {
             ackWaitingList.computeIfAbsent(sourceAddress, k -> new ArrayList<>()).add(newSeqNumber);
         }

@@ -44,15 +44,7 @@ public class NMS_Server {
         NetTaskListener.start();
         AlertFlowListener.start();
 
-        //TODO apresentação de métricas na UI
-
-        /*try {
-            NetTaskListener.join();
-            //AlertFlowListener.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
-
+        //TODO Tratar isto das métricas
         // Iniciar exibição periódica de métricas a cada 10 segundos
         startMetricDisplayScheduler();
         startInteractiveMenu();
