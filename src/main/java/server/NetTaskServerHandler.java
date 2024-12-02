@@ -89,6 +89,15 @@ public class NetTaskServerHandler implements Runnable {
         sendReply(reply);
     }
 
+    //PROPOSTA 2 PARA processRegister
+    // private void processRegister(Message msg){
+    //     System.out.println("Regist Received from " + packet.getAddress());
+    //     String sourceAddress = packet.getAddress().getHostAddress();
+    //     Task task = (Task) msg.getData();
+    //     tasks.put(sourceAddress, task);
+    //     sendReply(new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null));
+    // }
+
     private void processTaskResult(Message msg) {
         System.out.println("Task Result Received from " + packet.getAddress()+ " : " + msg.toString());
         TaskResult taskResult = (TaskResult) msg.getData();

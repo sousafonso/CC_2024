@@ -232,7 +232,8 @@ public class MetricCollector implements Runnable {
         byte[] byteMsg = msg.getPDU();
         connection.sendViaTCP(byteMsg);
 
-        //TODO Lista de espera de ACKs (a mesma que netTask ou separada?)
+        // Adicionar à lista de espera por ACK
+        NMS_Agent.addAckToList(notification.getTimestamp(), msg); // ??
     }
 
     public void run() {

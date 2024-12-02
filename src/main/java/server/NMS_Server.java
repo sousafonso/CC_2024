@@ -39,6 +39,7 @@ public class NMS_Server {
         // Carregar tarefas do JSON de configuração
         Map<String, Task> tasks = this.taskReader.readJson();
 
+        // não deveria ser passado uma UDP_PORT? para o NetTaskServerHandler?
         Thread NetTaskListener = new Thread(new NetTaskServerListener(tasks, storageModule));
         Thread AlertFlowListener = new Thread(new AlertFlowListener(TCP_PORT, storageModule));
         NetTaskListener.start();
@@ -67,7 +68,7 @@ public class NMS_Server {
                     storageModule.displayMetricsAndAlerts(clientId);
                     break;
                 case 2:
-                    System.out.println("Saindo...");
+                    System.out.println("A sair...");
                     scanner.close();
                     return;
                 default:

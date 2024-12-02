@@ -128,6 +128,23 @@ public class NMS_Agent {
         //TODO ver isto que ainda tem a ver com ACKs
         //thread a receber acks
         //while true
+        // new Thread(() -> {
+        //     while (true) {
+        //         waitingAckLock.lock();
+        //         try {
+        //             Iterator<MetricResult> iterator = waitingAck.iterator();
+        //             while (iterator.hasNext()) {
+        //                 MetricResult pair = iterator.next();
+        //                 if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
+        //                     connection.sendViaUDP(pair.getTaskResult().getPDU());
+        //                     pair.setTimeSent(LocalDateTime.now());
+        //                 }
+        //             }
+        //         } finally {
+        //             waitingAckLock.unlock();
+        //         }
+        //     }
+        // }).start();
         for (MetricResult pair : this.waitingAck) {
             //if(diferença timestam e data atual maior que time out)
             //  mandar mensagem de novo pela connection
