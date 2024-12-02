@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class AlertFlowListener implements Runnable{
+    //TODO tratar do AlertFlow no servidor (ex: é necessário handler?) parece um pouco verde
     private int tcpPort;
     private ServerSocket serverSocket;
 
