@@ -10,6 +10,14 @@ public class Latency extends LinkMetric{
         this.packageQuantity = packageQuantity;
     }
 
+    public int getFrequency(){
+        return frequency;
+    }
+
+    public int getPackageQuantity() {
+        return packageQuantity;
+    }
+
     @Override
     public String getPayload() {
         return super.getMetricName().toInteger() + ";" +

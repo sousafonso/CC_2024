@@ -64,9 +64,9 @@
               "protocol": "TCP"
             },
             "latency": {
-              "serverAddress": "192.168.1.2",
-              "frequency": 15,
-              "packageCount": 10
+              "serverAddress": "google.com",
+              "frequency": 1,
+              "packageCount": 4
             }
           },
           "alertFlowConditions": {

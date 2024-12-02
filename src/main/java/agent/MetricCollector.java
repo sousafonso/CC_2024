@@ -4,9 +4,7 @@ import message.Message;
 import message.MessageType;
 import message.Notification;
 import message.TaskResult;
-import taskContents.LinkMetric;
-import taskContents.LocalMetric;
-import taskContents.MetricName;
+import taskContents.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -34,14 +32,14 @@ public class MetricCollector implements Runnable {
         this.linkMetric = linkMetric;
     }
 
-    private double collectCpuUsage() {
+    private double collectCpuUsage() throws RuntimeException{
         String command = "top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'";
         return Double.parseDouble(executeCommand(List.of("sh",
                 "-c",
                 command.replaceAll("\\\\[$]", "\\$"))));
     }
 
-    private double collectRAMUsage() {
+    private double collectRAMUsage() throws RuntimeException{
         String command = "free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'";
         return Double.parseDouble(executeCommand(List.of("sh",
                 "-c",
@@ -66,8 +64,8 @@ public class MetricCollector implements Runnable {
         throw new IOException();
     }
 
-    private String executeCommand(List<String> command) {
-        StringBuilder output = new StringBuilder(); // StringBuilder é um tipo de String que pode ser modificada
+    private String executeCommand(List<String> command) throws RuntimeException{
+        StringBuilder output = new StringBuilder();
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command); // ProcessBuilder é uma classe que permite a criação de processos
             Process process = processBuilder.start(); // start() inicia o processo
@@ -78,7 +76,11 @@ public class MetricCollector implements Runnable {
                 output.append(line);
             }
 
-            process.waitFor(); // waitFor() faz com que o processo atual aguarde a conclusão do processo representado por este Process
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                System.err.println(command.get(2) + " failed with exit code: " + exitCode);
+                throw new RuntimeException();
+            }
         } catch (Exception e) {
             output.append("Error executing command: ").append(command);
         }
@@ -112,30 +114,22 @@ public class MetricCollector implements Runnable {
         return result;
     }
 
-    private double calculateJitter() {
-        return executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
-    }
-
-    private double calculatePacketLoss() {
-        return executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
-    }
-
     private double calculateLatency() {
-        return executePingCommand(List.of("ping", "-c", "4", linkMetric.getDestination()));
+        Latency latency = (Latency) this.linkMetric;
+        return executePingCommand(List.of("ping", "-c", String.valueOf(latency.getPackageQuantity()), "-i", String.valueOf(latency.getFrequency()), latency.getDestination()));
     }
 
     private double executePingCommand(List<String> command) {
-        //TODO requer teste em linux
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             Process process = processBuilder.start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            Pattern latencyPattern = Pattern.compile("time=([0-9.]+)\\s*ms");
+            Pattern pattern = Pattern.compile("rtt min/avg/max/mdev = [^/]*/([^/]*)/[^/]*/[^ ]* ms");
 
             while ((line = reader.readLine()) != null) {
-                Matcher matcher = latencyPattern.matcher(line);
+                Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
                     return Double.parseDouble(matcher.group(1));
                 }
@@ -143,19 +137,18 @@ public class MetricCollector implements Runnable {
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                System.err.println("Ping failed with exit code: " + exitCode);
-                throw new RuntimeException();
+                throw new RuntimeException("Ping failed with exit code -> " + exitCode);
             }
-
         } catch (Exception e) {
             System.err.println("Error executing command: " + command);
+            e.printStackTrace();
             return Double.MIN_VALUE;
         }
 
         return Double.MIN_VALUE;
     }
 
-    private double executeIperfCommand(List<String> command) {
+    private double executeIperfCommand(List<String> command, MetricName metricName) {
         //TODO rever iperf (packet loss e jitter)
         StringBuilder output = new StringBuilder();
         try {
@@ -204,13 +197,19 @@ public class MetricCollector implements Runnable {
                 result = calculateLatency();
                 break;
             case JITTER:
-                result = calculateJitter();
+                //IperfMetric metric = (IperfMetric) this.linkMetric;
+                //result = executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
                 break;
             case PACKET_LOSS:
-                result = calculatePacketLoss();
+                //IperfMetric metric = (IperfMetric) this.linkMetric;
+                //result = executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
+                break;
+            case BANDWIDTH:
+                //IperfMetric metric = (IperfMetric) this.linkMetric;
+                //result = executeIperfCommand(List.of("iperf3", "-c", linkMetric.getDestination(), "-u", "-J"));
                 break;
             default:
-                System.out.println("Erro ao coletar métrica local " + localMetric.getMetricName());
+                System.out.println("Erro ao coletar métrica local " + linkMetric.getMetricName());
                 break;
         }
 
@@ -238,10 +237,10 @@ public class MetricCollector implements Runnable {
 
     public void run() {
         try {
-            double result;
+            double result = Double.MIN_VALUE;
             MetricName name;
             if (localMetric != null) {
-                result = processLocalMetric();
+                //result = processLocalMetric();
                 name = localMetric.getMetricName();
             } else {
                 result = processLinkMetric();
@@ -260,7 +259,7 @@ public class MetricCollector implements Runnable {
                 }
             }
         } catch (RuntimeException e) {
-            System.out.println("Erro ao executar os comandos para coletar as métricas");
+            System.out.println("Erro ao coletar as métricas: " + e.getMessage());
         }
     }
 }
