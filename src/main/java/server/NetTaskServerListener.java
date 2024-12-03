@@ -32,19 +32,21 @@ public class NetTaskServerListener implements Runnable {
     @Override
     public void run() {
         try {
-            socket = new DatagramSocket(UDP_PORT, serverIP);
+            this.socket = new DatagramSocket(UDP_PORT);
+            byte[] buffer = new byte[1024];
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
             while (true) {
-                byte[] buffer = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                new Thread(new NetTaskServerHandler(packet, tasks, storage)).start();
+                this.socket.receive(packet);
+                Thread handler = new Thread(new NetTaskServerHandler(packet, tasks, storage));
+                handler.start();
             }
         } catch (Exception e) {
-            System.out.println("Erro ao receber pacote");
+            System.err.println("ERROR: Could not start server listener");
             e.printStackTrace();
         } finally {
-            if(socket != null && !socket.isClosed()) {
-                socket.close();
+            if (this.socket != null && !this.socket.isClosed()) {
+                this.socket.close();
             }
         }
     }

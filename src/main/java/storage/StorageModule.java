@@ -1,44 +1,39 @@
-package storage; /**
- * StorageModule.java
- * @description: Módulo que armazena métricas e alertas de forma centralizada no servidor. Usado por NetTaskHandler e AlertFlowHandler para armazenar dados.
-    Interage com NMS_Server para exibir métricas e alertas periodicamente.
- * 
- * @responsibility:
- *  Armazenar resultados de tarefas (métricas) e alertas críticos recebidos dos agentes.
-    Exibir periodicamente o conteúdo armazenado.
- */
-
-import java.util.HashMap;
-import java.util.Map;
-
-import message.Notification;
-import message.TaskResult;
+package storage;
+import java.util.*;
+import message.*;
 
 public class StorageModule {
-    //TODO Tratar isto do storage
-    private Map<String, Map<String, TaskResult>> clientTaskResults = new HashMap<>();
-    private Map<String, Map<String, Notification>> clientAlerts = new HashMap<>();
+    private final Map<String, List<TaskResult>> taskResults = new HashMap<>();
+    private final Map<String, List<Notification>> alerts = new HashMap<>();
 
-    // Armazena métricas
-    public synchronized void storeTaskResult(String clientId, String taskId, TaskResult result) {
-        clientTaskResults.computeIfAbsent(clientId, k -> new HashMap<>()).put(taskId, result);
-        System.out.println("Métrica armazenada para Task ID: " + taskId + " do cliente: " + clientId);
+    // Armazenar as métricas coletadas
+    public synchronized void storeTaskResult(String deviceId, TaskResult result) {
+        taskResults.putIfAbsent(deviceId, new ArrayList<>());
+        taskResults.get(deviceId).add(result);
     }
 
-    // Armazena alertas
-    public synchronized void storeAlert(String clientId, String alertId, Notification alert) {
-        clientAlerts.computeIfAbsent(clientId, k -> new HashMap<>()).put(alertId, alert);
-        System.out.println("Alerta armazenado: " + alertId + " do cliente: " + clientId);
+    // Armazenar alertas
+    public synchronized void storeAlert(String deviceId, Notification alert) {
+        alerts.putIfAbsent(deviceId, new ArrayList<>());
+        alerts.get(deviceId).add(alert);
     }
 
-    // Exibe todas as métricas e alertas de um cliente
-    public void displayMetricsAndAlerts(String clientId) {
-        System.out.println("----- Métricas para o cliente: " + clientId + " -----");
-        clientTaskResults.getOrDefault(clientId, new HashMap<>()).forEach((taskId, taskResult) -> 
-            System.out.println("Task ID: " + taskId + ", Result: " + taskResult.getResult()));
-
-        System.out.println("----- Alertas para o cliente: " + clientId + " -----");
-        clientAlerts.getOrDefault(clientId, new HashMap<>()).forEach((alertId, alert) -> 
-            System.out.println("Alert ID: " + alertId + ", Message: " + alert.getMeasurement()));
+    // Exibir todas as métricas armazenadas
+    public synchronized void displayAllMetrics() {
+        System.out.println("=== Métricas ===");
+        taskResults.forEach((deviceId, results) -> {
+            System.out.println("Dispositivo: " + deviceId);
+            results.forEach(result -> System.out.println(result));
+        });
     }
+
+    // Exibir todos os alertas armazenados
+    public synchronized void displayAllAlerts() {
+        System.out.println("=== Alertas ===");
+        alerts.forEach((deviceId, alertsList) -> {
+            System.out.println("Dispositivo: " + deviceId);
+            alertsList.forEach(alert -> System.out.println(alert));
+        });
+    }
+
 }

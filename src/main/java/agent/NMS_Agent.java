@@ -14,6 +14,7 @@ import message.*;
 import taskContents.*;
 
 import java.net.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -117,52 +118,28 @@ public class NMS_Agent {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(Math.min(this.task.getNumLinkMetrics() + this.task.getNumLocalMetrics(), Runtime.getRuntime().availableProcessors()));
 
         for (LocalMetric localMetric : localMetrics) {
-            System.out.println("Teste -> " + localMetric);
             executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, localMetric, null), 0, frequency, TimeUnit.SECONDS);
         }
 
         for (LinkMetric linkMetric : linkMetrics) {
-            if((linkMetric instanceof IperfMetric) && ((IperfMetric) linkMetric).getRole() == 's') {
-                // Se for para iniciar um servidor iperf, não é preciso fazer isto periodicamente, apenas numa Thread normal
+            if ((linkMetric instanceof IperfMetric) && ((IperfMetric) linkMetric).getRole() == 's') {
                 new Thread(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric)).start();
-            }
-            else {
+            } else {
                 executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
             }
         }
 
-        //TODO ver isto que ainda tem a ver com ACKs
-        //thread a receber acks
-        //while true
-        // new Thread(() -> {
-        //     while (true) {
-        //         waitingAckLock.lock();
-        //         try {
-        //             Iterator<MetricResult> iterator = waitingAck.iterator();
-        //             while (iterator.hasNext()) {
-        //                 MetricResult pair = iterator.next();
-        //                 if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
-        //                     connection.sendViaUDP(pair.getTaskResult().getPDU());
-        //                     pair.setTimeSent(LocalDateTime.now());
-        //                 }
-        //             }
-        //         } finally {
-        //             waitingAckLock.unlock();
-        //         }
-        //     }
-        // }).start();
-        for (MetricResult pair : this.waitingAck) {
-            //if(diferença timestam e data atual maior que time out)
-            //  mandar mensagem de novo pela connection
-        }
+        // Processamento de ACKs
+        processACKs();
+    }
 
-        // esperar por acks ?????????????????
-        // lista mensagem que ainda nao tem ack na connection ou aqui?
-        // ou map com localdatetime? para saber quando a mensagem foi enviada pela ultima vez e ver se já se passou o time out
-        // se já passou o timeout enviar mensagem de novo
-        // se não n fazer nada, esperar
-        // quando se receber um ack, ir ao map remover a entrada
-        // adicionar ao map quando se manda a mensagem
+    private void processACKs() {
+        for (MetricResult pair : this.waitingAck) {
+            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
+                connection.sendViaUDP(pair.getTaskResult().getPDU());
+                pair.setTimeSent(LocalDateTime.now());
+            }
+        }
     }
 
     private Message registerAgent() {

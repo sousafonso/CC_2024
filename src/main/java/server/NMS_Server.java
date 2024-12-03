@@ -47,40 +47,8 @@ public class NMS_Server {
 
         //TODO Tratar isto das métricas
         // Iniciar exibição periódica de métricas a cada 10 segundos
-        startMetricDisplayScheduler();
-        startInteractiveMenu();
     }
 
-    private void startInteractiveMenu() {
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            System.out.println("Menu:");
-            System.out.println("1. Consultar métricas e alertas");
-            System.out.println("2. Sair");
-            System.out.print("Escolha uma opção: ");
-            int option = scanner.nextInt();
-            scanner.nextLine(); // Consumir nova linha
-
-            switch (option) {
-                case 1:
-                    System.out.print("Digite o ID do cliente: ");
-                    String clientId = scanner.nextLine();
-                    storageModule.displayMetricsAndAlerts(clientId);
-                    break;
-                case 2:
-                    System.out.println("A sair...");
-                    scanner.close();
-                    return;
-                default:
-                    System.out.println("Opção inválida. Tente novamente.");
-            }
-        }
-    }
-
-    private void startMetricDisplayScheduler() {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(() -> storageModule.displayMetricsAndAlerts("default"), 0, 10, TimeUnit.SECONDS); // ver "default"
-    }
 
     public static void main(String[] args) {
         NMS_Server server = new NMS_Server();

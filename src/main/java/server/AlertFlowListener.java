@@ -21,26 +21,5 @@ public class AlertFlowListener implements Runnable {
 
     @Override
     public void run() {
-        try {
-            serverSocket = new ServerSocket(tcpPort);
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                String receivedData = reader.readLine();
-                Notification notification = new Notification(receivedData.split(";"));
-                storageModule.storeAlert(notification.getTaskID(), receivedData, notification);
-                System.out.println("Alerta recebido: " + notification.getMeasurement());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (serverSocket != null && !serverSocket.isClosed()) {
-                    serverSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

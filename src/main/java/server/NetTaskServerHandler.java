@@ -102,7 +102,7 @@ public class NetTaskServerHandler implements Runnable {
         System.out.println("Task Result Received from " + packet.getAddress()+ " : " + msg.toString());
         TaskResult taskResult = (TaskResult) msg.getData();
         String taskId = taskResult.getTaskId();
-        storageModule.storeTaskResult(taskId, taskId, taskResult);
+        storageModule.storeTaskResult(taskId, taskResult);
         sendReply(new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null));
     }
 
