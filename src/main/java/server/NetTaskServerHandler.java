@@ -13,6 +13,7 @@ package server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,6 @@ import storage.StorageModule;
 
 public class NetTaskServerHandler implements Runnable {
     private Lock lock = new ReentrantLock();
-    private static Map<String, List<Integer>> ackWaitingList = new HashMap<>();
     private final Map<String, Task> tasks;
     private DatagramPacket packet;
     private StorageModule storageModule;
@@ -74,16 +74,7 @@ public class NetTaskServerHandler implements Runnable {
         else{
             System.out.println("A responder a registo com TASK para " + packet.getAddress());
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Task, agentTask);
-        }
-
-        lock.lock();
-        //TODO tratamento destes ACKs depois de enviar uma tarefa
-        // (uma classe com o timestamp e timeouts como no agent ? ou uma thread aqui à espera e a mandar novamente se necessário)
-        try {
-            ackWaitingList.computeIfAbsent(sourceAddress, k -> new ArrayList<>()).add(newSeqNumber);
-        }
-        finally {
-            lock.unlock();
+            NetTaskServerListener.addToAckWaitingList(LocalDateTime.now(), reply, packet.getAddress(), packet.getPort());
         }
 
         sendReply(reply);
@@ -98,21 +89,7 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     private void processAck(Message msg){
-        System.out.println("Ack Received from " + packet.getAddress());
-        String sourceAddress = packet.getAddress().getHostAddress();
-        int ackNumber = msg.getAckNumber();
-
-        lock.lock();
-        try {
-            if (ackWaitingList.containsKey(sourceAddress)) {
-                List<Integer> list = ackWaitingList.get(sourceAddress);
-                list.remove((Integer) ackNumber);
-                ackWaitingList.put(sourceAddress, list);
-            }
-        }
-        finally {
-            lock.unlock();
-        }
+        NetTaskServerListener.removeFromAckWaitingList(msg.getAckNumber());
     }
 
     @Override
