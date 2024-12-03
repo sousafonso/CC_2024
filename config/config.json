@@ -2,39 +2,45 @@
   "tasks": [
     {
       "taskId": "task-001",
-      "frequency": 20,
+      "frequency": 15,
       "devices": [
         {
-          "deviceId": "10.0.0.1",
+          "deviceId": "10.0.5.10",
           "deviceMetrics": {
-            "cpuUsage": true,
+            "cpuUsage": false,
             "ramUsage": false,
             "interfaceStats": []
           },
           "linkMetrics": {
             "bandwidth": {
               "role": "client",
-              "serverAddress": "192.168.1.2",
+              "serverAddress": "10.0.4.10",
               "duration": 1,
               "protocol": "TCP"
             },
+            "jitter": {
+              "role": "client",
+              "serverAddress": "10.0.4.10",
+              "duration": 12,
+              "protocol": "UDP"
+            },
             "packetLoss":  {
               "role": "client",
-              "serverAddress": "192.168.1.2",
+              "serverAddress": "10.0.4.10",
               "duration": 10,
-              "protocol": "TCP"
+              "protocol": "UDP"
             },
             "latency": {
-              "serverAddress": "192.168.1.2",
-              "frequency": 15,
-              "packageCount": 10
+              "serverAddress": "10.0.4.10",
+              "frequency": 1,
+              "packageCount": 4
             }
           },
           "alertFlowConditions": {
-            "cpuUsage": 80,
-            "interfaceStats": 1000,
             "packetLoss": 5,
-            "jitter": 100
+            "jitter": 100,
+            "latency": 20,
+            "bandwidth": 12
           }
         },
         {
@@ -46,27 +52,10 @@
           },
           "linkMetrics": {
             "bandwidth": {
-              "role": "server",
-              "serverAddress": "192.168.1.1",
-              "duration": 20,
-              "protocol": "UDP"
-            },
-            "jitter": {
-              "role": "server",
-              "serverAddress": "192.168.1.2",
-              "duration": 12,
-              "protocol": "TCP"
-            },
-            "packetLoss":  {
               "role": "client",
-              "serverAddress": "192.168.1.2",
-              "duration": 10,
+              "serverAddress": "127.0.0.1",
+              "duration": 8,
               "protocol": "TCP"
-            },
-            "latency": {
-              "serverAddress": "google.com",
-              "frequency": 1,
-              "packageCount": 4
             }
           },
           "alertFlowConditions": {

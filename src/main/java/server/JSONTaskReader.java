@@ -429,13 +429,17 @@ class AlertFlowConditions {
     private int interfaceStats;
     private int packetLoss;
     private int jitter;
+    private int latency;
+    private int bandwidth;
 
-    public AlertFlowConditions(int cpuUsage, int ramUsage, int interfaceStats, int packetLoss, int jitter){
+    public AlertFlowConditions(int cpuUsage, int ramUsage, int interfaceStats, int packetLoss, int jitter, int latency, int bandwidth) {
         this.cpuUsage = cpuUsage;
         this.ramUsage = ramUsage;
         this.interfaceStats = interfaceStats;
         this.packetLoss = packetLoss;
         this.jitter = jitter;
+        this.latency = latency;
+        this.bandwidth = bandwidth;
     }
 
     public AlertFlowConditions() {
@@ -444,6 +448,8 @@ class AlertFlowConditions {
         this.interfaceStats = -1;
         this.packetLoss = -1;
         this.jitter = -1;
+        this.latency = -1;
+        this.bandwidth = -1;
     }
 
     public int getCpuUsage() {
@@ -486,7 +492,23 @@ class AlertFlowConditions {
         this.jitter = jitter;
     }
 
+    public int getLatency() {
+        return latency;
+    }
+
+    public void setLatency(int latency) {
+        this.latency = latency;
+    }
+
+    public int getBandwidth() {
+        return bandwidth;
+    }
+
+    public void setBandwidth(int bandwidth) {
+        this.bandwidth = bandwidth;
+    }
+
     public String toString(){
-        return "AlertFlowConditions: { cpuUsage: " + cpuUsage + ", ramUsage: " + ramUsage + ", interfaceStats: " + interfaceStats + ", packetLoss: " + packetLoss + ", jitter: " + jitter + "}";
+        return "AlertFlowConditions: { cpuUsage: " + cpuUsage + ", ramUsage: " + ramUsage + ", interfaceStats: " + interfaceStats + ", packetLoss: " + packetLoss + ", jitter: " + jitter +", latency: " + latency + ", bandwidth: " + bandwidth + "}";
     }
 }

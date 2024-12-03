@@ -122,7 +122,13 @@ public class NMS_Agent {
         }
 
         for (LinkMetric linkMetric : linkMetrics) {
-            executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
+            if((linkMetric instanceof IperfMetric) && ((IperfMetric) linkMetric).getRole() == 's') {
+                // Se for para iniciar um servidor iperf, não é preciso fazer isto periodicamente, apenas numa Thread normal
+                new Thread(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric)).start();
+            }
+            else {
+                executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
+            }
         }
 
         //TODO ver isto que ainda tem a ver com ACKs
