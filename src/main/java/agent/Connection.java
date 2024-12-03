@@ -12,32 +12,29 @@ public class Connection {
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
-    private final int TIMEOUT = 1000; // 1 segundo
+    private final int TIMEOUT;
 
     private Lock netTaskSendLock = new ReentrantLock();
-    private Lock netTaskReceiveLock = new ReentrantLock();
     private Lock alertFlowSendLock = new ReentrantLock();
-    private Lock alertFlowReceiveLock = new ReentrantLock();
 
     private InetAddress serverIP;
     private DatagramSocket netTaskSocket;
     private Socket alertFlowSocket;
     private DataOutputStream alertFlowOut;
-    private DataInputStream alertFlowIn;
-
-    public Connection() {
+    public Connection(int timeout) {
         try {
             this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
         } catch (UnknownHostException e) {
             System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
         }
 
+        this.TIMEOUT = timeout;
+
         try {
             this.netTaskSocket = new DatagramSocket(UDP_PORT);
             this.netTaskSocket.setSoTimeout(TIMEOUT);
             this.alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT);
             this.alertFlowSocket.setSoTimeout(TIMEOUT);
-            this.alertFlowIn = new DataInputStream(new BufferedInputStream(this.alertFlowSocket.getInputStream()));
             this.alertFlowOut = new DataOutputStream(new BufferedOutputStream(this.alertFlowSocket.getOutputStream()));
         } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
@@ -63,7 +60,6 @@ public class Connection {
         byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data, data.length);
 
-        netTaskReceiveLock.lock();
         try {
             netTaskSocket.receive(packet);
         }
@@ -72,9 +68,6 @@ public class Connection {
         }
         catch (IOException e) {
             System.out.println("Erro ao receber pacote via UDP do servidor.");
-        }
-        finally {
-            netTaskReceiveLock.unlock();
         }
 
         return new Message(packet.getData(), packet.getLength());
@@ -92,25 +85,6 @@ public class Connection {
         finally {
             alertFlowSendLock.unlock();
         }
-    }
-
-    public Message receiveViaTCP(){
-        byte[] data = new byte[1024];
-        int read = 0;
-
-        alertFlowReceiveLock.lock();
-        try {
-            int length = alertFlowIn.readInt();
-            read = alertFlowIn.read(data, 0, length);
-        }
-        catch (IOException e) {
-            System.out.println("Erro ao ler AlertFlow do servidor");
-        }
-        finally {
-            alertFlowReceiveLock.unlock();
-        }
-
-        return new Message(data, read);
     }
 
     public void close(){

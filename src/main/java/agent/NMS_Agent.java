@@ -17,6 +17,7 @@ import java.net.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,13 +25,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class NMS_Agent {
-    private static class MetricResult {
+    private static class ResultStatus {
         private LocalDateTime timeSent;
         private Message taskResult;
+        private int tries;
 
-        public MetricResult(LocalDateTime timeSent, Message taskResult) {
+        public ResultStatus(LocalDateTime timeSent, Message taskResult) {
             this.timeSent = timeSent;
             this.taskResult = taskResult;
+            this.tries = 0;
         }
 
         public LocalDateTime getTimeSent() {
@@ -45,42 +48,42 @@ public class NMS_Agent {
             return taskResult;
         }
 
+        public int getTries() {
+            return tries;
+        }
+
+        public void incTries() {
+            this.tries++;
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {return true;}
 
             if (obj == null || obj.getClass() != this.getClass()) {return false;}
 
-            MetricResult other = (MetricResult) obj;
+            ResultStatus other = (ResultStatus) obj;
             return this.timeSent.equals(other.timeSent) && this.taskResult.equals(other.taskResult);
         }
     }
 
-    //ainda ver o que fazer com isto
     private final int MAX_RETRIES = 5;
-    private final int TIMEOUT = 1000; // 1 segundo
-
+    private final int TIMEOUT_MILIS = 3000;
+    private final Duration TIMEOUT = Duration.ofMillis(TIMEOUT_MILIS);
     private Connection connection;
-    private static Lock waitingAckLock = new ReentrantLock();
     private Map<MetricName, Integer> alertValues;
-    private static List<MetricResult> waitingAck = new ArrayList<>();
+    private static ConcurrentHashMap<Integer, ResultStatus> waitingAck = new ConcurrentHashMap<>();
     private Task task;
     private String agentId;
 
     public NMS_Agent(String agentId) {
         this.agentId = agentId;
-        this.connection = new Connection();
+        this.connection = new Connection(TIMEOUT_MILIS);
         this.alertValues = new HashMap<>();
     }
 
-    public static void addAckToList(LocalDateTime timeSent, Message taskResult) {
-        waitingAckLock.lock();
-        try{
-            waitingAck.add(new MetricResult(timeSent, taskResult));
-        }
-        finally {
-            waitingAckLock.unlock();
-        }
+    public static void addToAckWaitingList(LocalDateTime timeSent, Message taskResult) {
+        waitingAck.put(taskResult.getSeqNumber(), new ResultStatus(timeSent, taskResult));
     }
 
     private void processConditions(Conditions conditions) {
@@ -118,26 +121,14 @@ public class NMS_Agent {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(Math.min(this.task.getNumLinkMetrics() + this.task.getNumLocalMetrics(), Runtime.getRuntime().availableProcessors()));
 
         for (LocalMetric localMetric : localMetrics) {
-            executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, localMetric, null), 0, frequency, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), alertValues.getOrDefault(localMetric.getMetricName(), -1), localMetric, null), 0, frequency, TimeUnit.SECONDS);
         }
 
         for (LinkMetric linkMetric : linkMetrics) {
             if ((linkMetric instanceof IperfMetric) && ((IperfMetric) linkMetric).getRole() == 's') {
-                new Thread(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric)).start();
+                new Thread(new MetricCollector(connection, this.task.getId(), alertValues.getOrDefault(linkMetric.getMetricName(), -1), null, linkMetric)).start();
             } else {
-                executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), 0, null, linkMetric), 0, frequency, TimeUnit.SECONDS);
-            }
-        }
-
-        // Processamento de ACKs
-        processACKs();
-    }
-
-    private void processACKs() {
-        for (MetricResult pair : this.waitingAck) {
-            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
-                connection.sendViaUDP(pair.getTaskResult().getPDU());
-                pair.setTimeSent(LocalDateTime.now());
+                executor.scheduleAtFixedRate(new MetricCollector(connection, this.task.getId(), alertValues.getOrDefault(linkMetric.getMetricName(), -1), null, linkMetric), 0, frequency, TimeUnit.SECONDS);
             }
         }
     }
@@ -194,29 +185,36 @@ public class NMS_Agent {
             processConditions(this.task.getConditions());
             processTask();
 
-            //TODO tratamento de ACKs no cliente (receção e envio de mensagem em falta de ACK)
-
-            // Thread para receber ACKs
-            /*new Thread(() -> {
+            new Thread(() -> {
                 while (true) {
-                    waitingAckLock.lock();
                     try {
-                        Iterator<MetricResult> iterator = waitingAck.iterator();
-                        while (iterator.hasNext()) {
-                            MetricResult pair = iterator.next();
-                            if (Duration.between(pair.getTimeSent(), LocalDateTime.now()).toMillis() > TIMEOUT) {
-                                // Reenviar mensagem
-                                connection.sendViaUDP(pair.getTaskResult().getPDU());
-                                pair.setTimeSent(LocalDateTime.now());
-                            }
+                        Message ack = connection.receiveViaUDP();
+                        if (ack.getType() == MessageType.Ack) {
+                            waitingAck.remove(ack.getAckNumber());
                         }
-                    } finally {
-                        waitingAckLock.unlock();
+                    } catch (SocketTimeoutException ignored) {
                     }
                 }
-            }).start();*/
+            }).start();
+
+            while (true) {
+                for(ResultStatus result : waitingAck.values()) {
+                    if(result.getTries() > MAX_RETRIES) {
+                        waitingAck.remove(result.getTaskResult().getSeqNumber());
+                        continue;
+                    }
+
+                    Duration timeDifference = Duration.between(result.getTimeSent(), LocalDateTime.now());
+                    if(timeDifference.compareTo(TIMEOUT) > 0) {
+                        connection.sendViaUDP(result.getTaskResult().getPDU());
+                        result.setTimeSent(LocalDateTime.now());
+                        result.incTries();
+                        waitingAck.put(result.getTaskResult().getSeqNumber(), result);
+                    }
+                }
+            }
         } finally {
-            //connection.close();
+            connection.close();
         }
     }
 

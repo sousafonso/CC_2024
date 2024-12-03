@@ -236,7 +236,7 @@ public class MetricCollector implements Runnable {
         connection.sendViaUDP(byteMsg);
 
         // Adicionar à lista de espera por ACK
-        NMS_Agent.addAckToList(timestamp, msg);
+        NMS_Agent.addToAckWaitingList(timestamp, msg);
     }
 
     private void sendAlertNotification(Notification notification) {
@@ -246,7 +246,7 @@ public class MetricCollector implements Runnable {
         connection.sendViaTCP(byteMsg);
 
         // Adicionar à lista de espera por ACK
-        NMS_Agent.addAckToList(notification.getTimestamp(), msg); // ??
+        NMS_Agent.addToAckWaitingList(notification.getTimestamp(), msg); // ??
     }
 
     public void run() {
