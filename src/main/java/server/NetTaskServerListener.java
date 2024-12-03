@@ -33,10 +33,10 @@ public class NetTaskServerListener implements Runnable {
     public void run() {
         try {
             this.socket = new DatagramSocket(UDP_PORT);
-            byte[] buffer = new byte[1024];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
             while (true) {
+                byte[] buffer = new byte[1024];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 this.socket.receive(packet);
                 Thread handler = new Thread(new NetTaskServerHandler(packet, tasks, storage));
                 handler.start();
