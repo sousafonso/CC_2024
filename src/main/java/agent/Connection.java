@@ -2,7 +2,9 @@ package agent;
 
 import message.Message;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -13,14 +15,10 @@ public class Connection {
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
     private final int TIMEOUT;
-
     private Lock netTaskSendLock = new ReentrantLock();
-    private Lock alertFlowSendLock = new ReentrantLock();
-
     private InetAddress serverIP;
     private DatagramSocket netTaskSocket;
-    private Socket alertFlowSocket;
-    private DataOutputStream alertFlowOut;
+
     public Connection(int timeout) {
         try {
             this.serverIP = InetAddress.getByName(SERVER_HOST_NAME); // guardar o IP do servidor para não ter que resolver o hostname a cada envio
@@ -33,13 +31,8 @@ public class Connection {
         try {
             this.netTaskSocket = new DatagramSocket(UDP_PORT); // criar socket para enviar/receber pacotes via UDP
             this.netTaskSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
-            this.alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT); // criar socket para enviar/receber pacotes via TCP
-            this.alertFlowSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
-            this.alertFlowOut = new DataOutputStream(new BufferedOutputStream(this.alertFlowSocket.getOutputStream())); // criar streams para enviar/receber dados
         } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
-        } catch (IOException e) {
-            System.out.println("Erro ao criar AlertFlow Streams");
         }
     }
 
@@ -74,16 +67,17 @@ public class Connection {
     }
 
     public void sendViaTCP(byte[] data){
-        alertFlowSendLock.lock();
         try{
+            Socket alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT);
+            alertFlowSocket.setSoTimeout(TIMEOUT);
+            DataOutputStream alertFlowOut = new DataOutputStream(new BufferedOutputStream(alertFlowSocket.getOutputStream()));
+
             alertFlowOut.write(data.length);
             alertFlowOut.write(data);
             alertFlowOut.flush();
+            alertFlowSocket.close();
         } catch (IOException e) {
             System.out.println("Erro ao enviar notificação de alerta ao servidor");
-        }
-        finally {
-            alertFlowSendLock.unlock();
         }
     }
 
