@@ -1,22 +1,25 @@
 package agent;
 
-import message.Message;
-import message.MessageType;
-import message.Notification;
-import message.TaskResult;
-import taskContents.*;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import message.Message;
+import message.MessageType;
+import message.Notification;
+import message.TaskResult;
+import taskContents.IperfMetric;
+import taskContents.Latency;
+import taskContents.LinkMetric;
+import taskContents.LocalMetric;
+import taskContents.MetricName;
 
 public class MetricCollector implements Runnable {
     private Connection connection;
