@@ -113,6 +113,7 @@ public class MetricCollector implements Runnable {
         }
 
         for(String line : result) {
+            System.out.println("<DEBUG iperf (" + metric + ")> : " + line);
             Matcher matcher = pattern.matcher(line);
             if (matcher.find()) {
                 return Double.parseDouble(matcher.group(1));
