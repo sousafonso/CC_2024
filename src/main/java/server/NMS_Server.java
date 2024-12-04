@@ -45,10 +45,17 @@ public class NMS_Server {
         NetTaskListener.start();
         AlertFlowListener.start();
 
-        //TODO Tratar isto das métricas
-        // Iniciar exibição periódica de métricas a cada 10 segundos
+        startDisplayScheduler();
+
     }
 
+    private void startDisplayScheduler() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() -> {
+            storageModule.displayAllMetrics();
+            storageModule.displayAllAlerts();
+        }, 0, 10, TimeUnit.SECONDS);
+    }
 
     public static void main(String[] args) {
         NMS_Server server = new NMS_Server();
