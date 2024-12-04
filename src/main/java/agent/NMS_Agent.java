@@ -31,8 +31,8 @@ public class NMS_Agent {
     private static ConcurrentHashMap<Integer, ResultStatus> waitingAck = new ConcurrentHashMap<>();
     private Task task;
 
-    public NMS_Agent() {
-        this.connection = new Connection(TIMEOUT_MILLIS);
+    public NMS_Agent(String agentHostName) {
+        this.connection = new Connection(TIMEOUT_MILLIS, agentHostName);
         this.alertValues = new HashMap<>();
     }
 
@@ -179,7 +179,7 @@ public class NMS_Agent {
     }
 
     public static void main(String[] args) {
-        NMS_Agent agent = new NMS_Agent();
+        NMS_Agent agent = new NMS_Agent(args[0]);
         agent.start();
     }
 }

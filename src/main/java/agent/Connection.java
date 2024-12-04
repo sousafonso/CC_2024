@@ -10,7 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Connection {
-    private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
+    private final String SERVER_HOST_NAME = "10.0.4.10"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;
@@ -19,15 +19,15 @@ public class Connection {
     private InetAddress serverIP;
     private DatagramSocket netTaskSocket;
 
-    public Connection(int timeout) {
+    public Connection(int timeout, String agentHostName) {
         this.TIMEOUT = timeout;
 
         try {
             this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
-            this.netTaskSocket = new DatagramSocket(UDP_PORT);
+            this.netTaskSocket = new DatagramSocket(UDP_PORT, InetAddress.getByName(agentHostName));
             this.netTaskSocket.setSoTimeout(TIMEOUT);
         } catch (UnknownHostException e) {
-            System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
+            System.err.println("ERROR: Could not resolve hostname");
         } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
         }

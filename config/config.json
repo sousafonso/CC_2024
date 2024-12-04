@@ -5,10 +5,10 @@
       "frequency": 15,
       "devices": [
         {
-          "deviceId": "10.0.5.10",
+          "deviceId": "10.0.1.1",
           "deviceMetrics": {
-            "cpuUsage": false,
-            "ramUsage": false,
+            "cpuUsage": true,
+            "ramUsage": true,
             "interfaceStats": []
           },
           "linkMetrics": {
@@ -37,9 +37,11 @@
             }
           },
           "alertFlowConditions": {
-            "packetLoss": 5,
+	    "cpuUsage": 1,
+	    "ramUsage": 50,
+            "packetLoss": 0,
             "jitter": 100,
-            "latency": 20,
+            "latency": 0,
             "bandwidth": 12
           }
         },
