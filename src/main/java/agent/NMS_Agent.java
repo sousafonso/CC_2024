@@ -93,6 +93,7 @@ public class NMS_Agent {
             // Enviar pacote de registo ao servidor
             int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
             byte[] byteMsg = (new Message(seqNumber, 0, MessageType.Regist, null)).getPDU();
+            System.out.println("[ENVIO] Registo para o servidor");
             connection.sendViaUDP(byteMsg);
 
             // Esperar TIMEOUT, se não receber a tarefa (confirmação), enviar novamente o registo
@@ -102,6 +103,7 @@ public class NMS_Agent {
                     msg = connection.receiveViaUDP();
                     waiting = false;
                 } catch (SocketTimeoutException e) {
+                    System.out.println("[RE-ENVIO] Registo para o servidor");
                     connection.sendViaUDP(byteMsg);
                 }
             }
@@ -112,7 +114,9 @@ public class NMS_Agent {
             }
 
             if(msg.getType() == MessageType.Task) {
+                System.out.println("[RECEBIDO] Tarefa do servidor");
                 byteMsg = (new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null)).getPDU();
+                System.out.println("[ENVIO] ACK " + msg.getSeqNumber() + " para o servidor");
                 connection.sendViaUDP(byteMsg);
             }
         } catch (Exception e) {
@@ -145,6 +149,7 @@ public class NMS_Agent {
                     try {
                         Message ack = connection.receiveViaUDP();
                         if (ack.getType() == MessageType.Ack) {
+                            System.out.println("[RECEBIDO] ACK do servidor");
                             waitingAck.remove(ack.getAckNumber());
                         }
                     } catch (SocketTimeoutException ignored) {}
@@ -160,6 +165,7 @@ public class NMS_Agent {
 
                     Duration timeDifference = Duration.between(result.getTimeSent(), LocalDateTime.now());
                     if (timeDifference.compareTo(TIMEOUT) > 0) {
+                        System.out.println("[RE-ENVIO] Resultado para servidor");
                         connection.sendViaUDP(result.getMessage().getPDU());
                         result.setTimeSent(LocalDateTime.now());
                         result.incTries();

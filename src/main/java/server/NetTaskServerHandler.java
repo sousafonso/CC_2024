@@ -61,18 +61,18 @@ public class NetTaskServerHandler implements Runnable {
 
     // Processa a mensagem recebida e executa a ação correspondente
     private void processRegister(Message msg){
-        System.out.println("Recebido registo de " + packet.getAddress());
+        System.out.println("[RECEBIDO] registo de " + packet.getAddress());
         Message reply;
         String sourceAddress = packet.getAddress().getHostAddress();
         Task agentTask = tasks.get(sourceAddress);
         int newSeqNumber = msg.getSeqNumber() + 1;
 
         if(agentTask == null){
-            System.out.println("A responder a registo com ACK para " + packet.getAddress());
+            System.out.println("[ENVIAR] registo com ACK para " + packet.getAddress());
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Ack, null);
         }
         else{
-            System.out.println("A responder a registo com TASK para " + packet.getAddress());
+            System.out.println("[ENVIAR] a registo com TASK para " + packet.getAddress());
             reply = new Message(newSeqNumber, msg.getSeqNumber(), MessageType.Task, agentTask);
             NetTaskServerListener.addToAckWaitingList(LocalDateTime.now(), reply, packet.getAddress(), packet.getPort());
         }
@@ -81,14 +81,16 @@ public class NetTaskServerHandler implements Runnable {
     }
 
     private void processTaskResult(Message msg) {
-        System.out.println("Task Result Received from " + packet.getAddress()+ " : " + msg.toString());
         TaskResult taskResult = (TaskResult) msg.getData();
+        System.out.println("[RECEBIDO] Task Result de " + packet.getAddress()+ " : " + taskResult.getTaskId() + " -> " + taskResult.getMetricName() + " " + taskResult.getResult());
         String taskId = taskResult.getTaskId();
         storageModule.storeTaskResult(taskId, taskResult);
+        System.out.println("[Enviar] ACK para " + packet.getAddress() + " relativo a TaskResult" + taskResult.getTaskId() + " -> " + taskResult.getMetricName() + " " + taskResult.getResult());
         sendReply(new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null));
     }
 
     private void processAck(Message msg){
+        System.out.println("[RECEBIDO] ACK de " + packet.getAddress());
         NetTaskServerListener.removeFromAckWaitingList(msg.getAckNumber());
     }
 

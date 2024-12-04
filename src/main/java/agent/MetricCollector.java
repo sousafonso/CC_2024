@@ -263,11 +263,11 @@ public class MetricCollector implements Runnable {
 
             if (result != Double.MIN_VALUE) {
                 LocalDateTime timestamp = LocalDateTime.now();
-                System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                System.out.println("[ENVIO] Resultado ao servidor: " + taskID + "-" + name + " -> " + result);
                 sendTaskResult(new TaskResult(taskID, name, result), timestamp);
                 if (this.alertValue >= 0) {
                     if (result > this.alertValue) {
-                        System.out.println("A enviar notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                        System.out.println("[ENVIO] Notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue);
                         sendAlertNotification(new Notification(taskID, name, result, timestamp));
                     }
                 }

@@ -57,6 +57,7 @@ public class NetTaskServerListener implements Runnable {
                         try {
                             byte[] msgBytes = status.getMessage().getPDU();
                             DatagramPacket packet = new DatagramPacket(msgBytes, msgBytes.length, status.getSourceAddress(), status.getSourcePort());
+                            System.out.println("[RE-ENVIO] de mensagem para " + status.getSourceAddress() + ":" + status.getSourcePort());
                             this.socket.send(packet);
                             status.setTimeSent(LocalDateTime.now());
                             status.incTries();
@@ -66,6 +67,9 @@ public class NetTaskServerListener implements Runnable {
                         }
                     }
                 }
+                try {
+                    Thread.sleep(TIMEOUT);
+                } catch (InterruptedException ignored) {}
             }}).start();
 
             while (true) {
