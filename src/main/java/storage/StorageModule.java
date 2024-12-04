@@ -1,39 +1,76 @@
 package storage;
-import java.util.*;
+
 import message.*;
+import taskContents.*;
+
+import java.util.*;
 
 public class StorageModule {
-    private final Map<String, List<TaskResult>> taskResults = new HashMap<>();
-    private final Map<String, List<Notification>> alerts = new HashMap<>();
+    public static class MetricStats {
+        private double lastValue;
+        private double minValue = Double.MAX_VALUE;
+        private double maxValue = Double.MIN_VALUE;
 
-    // Armazenar as métricas coletadas
-    public synchronized void storeTaskResult(String deviceId, TaskResult result) {
-        taskResults.putIfAbsent(deviceId, new ArrayList<>());
-        taskResults.get(deviceId).add(result);
+        public void update(double value) {
+            lastValue = value;
+            minValue = Math.min(minValue, value);
+            maxValue = Math.max(maxValue, value);
+        }
+
+        public double getLastValue() {
+            return lastValue;
+        }
+
+        public double getMinValue() {
+            return minValue;
+        }
+
+        public double getMaxValue() {
+            return maxValue;
+        }
     }
 
-    // Armazenar alertas
+    private final Map<String, Map<MetricName, MetricStats>> metricsStorage = new HashMap<>();
+    private final Map<String, List<Notification>> alertsStorage = new HashMap<>();
+
+    public synchronized void storeMetric(String deviceId, MetricName metricName, double value) {
+        metricsStorage
+                .computeIfAbsent(deviceId, k -> new HashMap<>())
+                .computeIfAbsent(metricName, k -> new MetricStats())
+                .update(value);
+    }
+
     public synchronized void storeAlert(String deviceId, Notification alert) {
-        alerts.putIfAbsent(deviceId, new ArrayList<>());
-        alerts.get(deviceId).add(alert);
+        alertsStorage.computeIfAbsent(deviceId, k -> new ArrayList<>()).add(alert);
     }
 
-    // Exibir todas as métricas armazenadas
+    public synchronized Map<MetricName, MetricStats> getMetrics(String deviceId) {
+        return metricsStorage.getOrDefault(deviceId, Collections.emptyMap());
+    }
+
+    public synchronized List<Notification> getAlerts(String deviceId) {
+        return alertsStorage.getOrDefault(deviceId, Collections.emptyList());
+    }
+
     public synchronized void displayAllMetrics() {
         System.out.println("=== Métricas ===");
-        taskResults.forEach((deviceId, results) -> {
+        metricsStorage.forEach((deviceId, metrics) -> {
             System.out.println("Dispositivo: " + deviceId);
-            results.forEach(result -> System.out.println(result));
+            metrics.forEach((metricName, stats) -> {
+                System.out.printf("%s - Último Valor: %.2f, Mínimo: %.2f, Máximo: %.2f%n",
+                        metricName, stats.getLastValue(), stats.getMinValue(), stats.getMaxValue());
+            });
         });
     }
 
-    // Exibir todos os alertas armazenados
     public synchronized void displayAllAlerts() {
         System.out.println("=== Alertas ===");
-        alerts.forEach((deviceId, alertsList) -> {
+        alertsStorage.forEach((deviceId, alerts) -> {
             System.out.println("Dispositivo: " + deviceId);
-            alertsList.forEach(alert -> System.out.println(alert));
+            alerts.forEach(alert -> {
+                System.out.printf("Métrica: %s, Valor: %.2f, Timestamp: %s%n",
+                        alert.getMetricName(), alert.getMeasurement(), alert.getTimestamp());
+            });
         });
     }
-
 }

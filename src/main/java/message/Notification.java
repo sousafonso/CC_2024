@@ -1,6 +1,6 @@
 package message;
 
-import taskContents.MetricName;
+import taskContents.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -46,4 +46,5 @@ public class Notification extends Data {
     public String getPayload() {
         return taskID + ";" + metricName.toInteger() + ";" + measurement + ";" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
+
 }
