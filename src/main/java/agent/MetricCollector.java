@@ -263,7 +263,7 @@ public class MetricCollector implements Runnable {
 
             if (result != Double.MIN_VALUE) {
                 LocalDateTime timestamp = LocalDateTime.now();
-                System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]");
+                System.out.println("A enviar resultado ao servidor: " + taskID + "-" + name + " -> " + result + " [" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]"); // timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) é uma forma de formatar a data e hora para o formato ISO 8601
                 sendTaskResult(new TaskResult(taskID, name, result), timestamp);
                 if (this.alertValue >= 0) {
                     if (result > this.alertValue) {

@@ -23,19 +23,21 @@ public class Connection {
     private DataOutputStream alertFlowOut;
     public Connection(int timeout) {
         try {
-            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
+            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME); // guardar o IP do servidor para não ter que resolver o hostname a cada envio
         } catch (UnknownHostException e) {
             System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
         }
 
         this.TIMEOUT = timeout;
 
+        this.TIMEOUT = timeout;
+
         try {
-            this.netTaskSocket = new DatagramSocket(UDP_PORT);
-            this.netTaskSocket.setSoTimeout(TIMEOUT);
-            this.alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT);
-            this.alertFlowSocket.setSoTimeout(TIMEOUT);
-            this.alertFlowOut = new DataOutputStream(new BufferedOutputStream(this.alertFlowSocket.getOutputStream()));
+            this.netTaskSocket = new DatagramSocket(UDP_PORT); // criar socket para enviar/receber pacotes via UDP
+            this.netTaskSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
+            this.alertFlowSocket = new Socket(SERVER_HOST_NAME, SERVER_TCP_PORT); // criar socket para enviar/receber pacotes via TCP
+            this.alertFlowSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
+            this.alertFlowOut = new DataOutputStream(new BufferedOutputStream(this.alertFlowSocket.getOutputStream())); // criar streams para enviar/receber dados
         } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
         } catch (IOException e) {
