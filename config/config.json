@@ -46,8 +46,8 @@
         {
           "deviceId": "127.0.0.1",
           "deviceMetrics": {
-            "cpuUsage": false,
-            "ramUsage": false,
+            "cpuUsage": true,
+            "ramUsage": true,
             "interfaceStats": []
           },
           "linkMetrics": {
@@ -70,7 +70,7 @@
               "protocol": "UDP"
             },
             "latency": {
-              "serverAddress": "127.0.0.1",
+              "serverAddress": "google.com",
               "frequency": 1,
               "packageCount": 4
             }

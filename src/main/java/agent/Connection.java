@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Connection {
-    private final String SERVER_HOST_NAME = "10.0.4.10"; //TODO mudar conforme topologia
+    private final String SERVER_HOST_NAME = "127.0.0.1"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;
     private final int SERVER_TCP_PORT = 6000;
     private final int UDP_PORT = 7777;

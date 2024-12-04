@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +24,7 @@ import taskContents.LocalMetric;
 import taskContents.MetricName;
 
 public class MetricCollector implements Runnable {
+    private static Lock iperfServerLock = new ReentrantLock();
     private Connection connection;
     private String taskID;
     private int alertValue;
@@ -36,22 +39,18 @@ public class MetricCollector implements Runnable {
         this.linkMetric = linkMetric;
     }
 
-    private double collectCpuUsage() throws RuntimeException{
-        String command = "top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'";
-        List<String> result = executeCommand(List.of("sh",
-                "-c",
-                command.replaceAll("\\\\[$]", "\\$")));
+    private double collectCPUorRAMUsage(String command) throws RuntimeException {
+        try {
+            List<String> result = executeCommand(List.of("sh",
+                    "-c",
+                    command.replaceAll("\\\\[$]", "\\$")));
 
-        return result.isEmpty() ? Double.MIN_VALUE : Double.parseDouble(result.getFirst().replaceAll(",", "."));
-    }
+            return result.isEmpty() ? Double.MIN_VALUE : Double.parseDouble(result.getFirst().replaceAll(",", "."));
+        } catch (RuntimeException e) {
+            System.err.println("Medição de " + localMetric.getMetricName() + " falhou: " + e.getMessage());
+        }
 
-    private double collectRAMUsage() throws RuntimeException{
-        String command = "free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'";
-        List<String> result = executeCommand(List.of("sh",
-                "-c",
-                command.replaceAll("\\\\[$]", "\\$")));
-
-        return result.isEmpty() ? Double.MIN_VALUE : Double.parseDouble(result.getFirst().replaceAll(",", "."));
+        return Double.MIN_VALUE;
     }
 
     private double collectPackets(String interfaceName) throws IOException {
@@ -74,50 +73,66 @@ public class MetricCollector implements Runnable {
 
     private double calculateLatency() throws RuntimeException{
         Latency latency = (Latency) this.linkMetric;
-        List<String> result = executeCommand(List.of("ping",
-                "-c", String.valueOf(latency.getPackageQuantity()),
-                "-i", String.valueOf(latency.getFrequency()),
-                latency.getDestination()));
-        if(result.isEmpty()){
-            return Double.MIN_VALUE;
-        }
-        Pattern pattern = Pattern.compile("rtt min/avg/max/mdev = [^/]*/([^/]*)/[^/]*/[^ ]* ms");
+        try {
+            List<String> result = executeCommand(List.of("ping",
+                    "-c", String.valueOf(latency.getPackageQuantity()),
+                    "-i", String.valueOf(latency.getFrequency()),
+                    latency.getDestination()));
 
-        for(String line : result) {
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.find()) {
-                return Double.parseDouble(matcher.group(1));
+            Pattern pattern = Pattern.compile("rtt min/avg/max/mdev = [^/]*/([^/]*)/[^/]*/[^ ]* ms");
+
+            for (String line : result) {
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    return Double.parseDouble(matcher.group(1));
+                }
             }
+        } catch (RuntimeException e) {
+            System.err.println("Medição da latência falhou: " + e.getMessage());
         }
 
         return Double.MIN_VALUE;
     }
 
     private double calculateIperfMetric(MetricName name, Pattern pattern) throws RuntimeException{
-        IperfMetric metric = (IperfMetric) this.linkMetric;
-        List<String> result;
-        if(name == MetricName.BANDWIDTH){
-            result = executeCommand(List.of("iperf3",
-                "-c", linkMetric.getDestination(),
-                "-t", String.valueOf(metric.getDuration())));
-        }
-        else{
-            if(!metric.getProtocol().equals("UDP")){
-                System.err.println("Medição de Jitter e Packet Loss deve ser feita com protocolo UDP");
+        iperfServerLock.lock();
+        try {
+            IperfMetric metric = (IperfMetric) this.linkMetric;
+            List<String> result;
+            if (name == MetricName.BANDWIDTH) {
+                List<String> command = new ArrayList<>(List.of("iperf3",
+                        "-c", linkMetric.getDestination(),
+                        "-t", String.valueOf(metric.getDuration()),
+                        "-f", "m"));
+
+                if(metric.getProtocol().equals("UDP")){
+                    command.add("-u");
+                }
+
+                result = executeCommand(command);
+            } else {
+                if (!metric.getProtocol().equals("UDP")) {
+                    System.err.println("Medição de Jitter e Packet Loss deve ser feita com protocolo UDP");
+                }
+
+                result = executeCommand(List.of("iperf3",
+                        "-c", linkMetric.getDestination(),
+                        "-t", String.valueOf(metric.getDuration()),
+                        "-u"));
             }
 
-            result = executeCommand(List.of("iperf3",
-                    "-c", linkMetric.getDestination(),
-                    "-t", String.valueOf(metric.getDuration()),
-                    "-u"));
-        }
-
-        for(String line : result) {
-            System.out.println("<DEBUG iperf (" + metric + ")> : " + line);
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.find()) {
-                return Double.parseDouble(matcher.group(1));
+            for (String line : result) {
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    return Double.parseDouble(matcher.group(1));
+                }
             }
+
+        } catch (RuntimeException e) {
+            System.err.println("Medição de " + name + " falhou: " + e.getMessage());
+        }
+        finally {
+            iperfServerLock.unlock();
         }
 
         return Double.MIN_VALUE;
@@ -125,7 +140,7 @@ public class MetricCollector implements Runnable {
 
     private void runIperfServer(){
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(List.of("iperf", "-s"));
+            ProcessBuilder processBuilder = new ProcessBuilder(List.of("iperf3", "-s"));
             Process process = processBuilder.start();
 
             int exitCode = process.waitFor();
@@ -141,10 +156,10 @@ public class MetricCollector implements Runnable {
         double result = Double.MIN_VALUE;
         switch (localMetric.getMetricName()) {
             case CPU_USAGE:
-                result = collectCpuUsage();
+                result = collectCPUorRAMUsage("top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'");
                 break;
             case RAM_USAGE:
-                result = collectRAMUsage();
+                result = collectCPUorRAMUsage("free -m | grep Mem | awk '{print \\$3/\\$2 * 100.0}'");
                 break;
             case INTERFACE_STATS:
                 for (String anInterface : localMetric.getInterfaces()) {
@@ -176,8 +191,7 @@ public class MetricCollector implements Runnable {
                     runIperfServer();
                 }
                 else {
-                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("(\\d+\\.\\d+)\\s*ms"));
-                    System.out.println("Medição de Jitter -> " + result);
+                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("(\\d+\\.\\d+)\\s*ms.*receiver$"));
                 }
                 break;
             case PACKET_LOSS:
@@ -186,8 +200,7 @@ public class MetricCollector implements Runnable {
                     runIperfServer();
                 }
                 else {
-                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("\\((\\d+)%\\)"));
-                    System.out.println("Medição de PacketLoss -> " + result);
+                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("\\((\\d+)%\\)\\s*(receiver)$"));
                 }
                 break;
             case BANDWIDTH:
@@ -196,12 +209,12 @@ public class MetricCollector implements Runnable {
                     runIperfServer();
                 }
                 else {
-                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("(\\d+\\.\\d+)\\s*Mbits/sec"));
+                    result = calculateIperfMetric(linkMetric.getMetricName(), Pattern.compile("(\\d+\\.?\\d*)\\s*Mbits/sec\\s*(receiver)$"));
                     System.out.println("Medição de Bandwidth -> " + result);
                 }
                 break;
             default:
-                System.out.println("Erro ao coletar métrica local " + linkMetric.getMetricName());
+                System.out.println("Erro ao coletar métrica do link " + linkMetric.getMetricName());
                 break;
         }
 
@@ -224,10 +237,10 @@ public class MetricCollector implements Runnable {
             int exitCode = process.waitFor();
             if (exitCode != 0) {
                 System.err.println("Comando " + command + " falhou com exit code: " + exitCode);
-                throw new RuntimeException();
+                throw new RuntimeException(String.join(" ", lines));
             }
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao executar comando");
+            throw new RuntimeException(String.join(" ", lines));
         }
 
         return lines;
@@ -248,36 +261,29 @@ public class MetricCollector implements Runnable {
         Message msg = new Message(seqNumber, 0, MessageType.Notification, notification);
         byte[] byteMsg = msg.getPDU();
         connection.sendViaTCP(byteMsg);
-
-        // Adicionar à lista de espera por ACK
-        NMS_Agent.addToAckWaitingList(notification.getTimestamp(), msg); // ??
     }
 
     public void run() {
-        try {
-            double result;
-            MetricName name;
-            if (localMetric != null) {
-                result = processLocalMetric();
-                name = localMetric.getMetricName();
-            } else {
-                result = processLinkMetric();
-                name = linkMetric.getMetricName();
-            }
+        double result;
+        MetricName name;
+        if (localMetric != null) {
+            result = processLocalMetric();
+            name = localMetric.getMetricName();
+        } else {
+            result = processLinkMetric();
+            name = linkMetric.getMetricName();
+        }
 
-            if (result != Double.MIN_VALUE) {
-                LocalDateTime timestamp = LocalDateTime.now();
-                System.out.println("[ENVIO] Resultado ao servidor: " + taskID + "-" + name + " -> " + result);
-                sendTaskResult(new TaskResult(taskID, name, result), timestamp);
-                if (this.alertValue >= 0) {
-                    if (result > this.alertValue) {
-                        System.out.println("[ENVIO] Notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue);
-                        sendAlertNotification(new Notification(taskID, name, result, timestamp));
-                    }
+        if (result != Double.MIN_VALUE) {
+            LocalDateTime timestamp = LocalDateTime.now();
+            System.out.println("[ENVIO] Resultado ao servidor: " + taskID + "-" + name + " -> " + result);
+            sendTaskResult(new TaskResult(taskID, name, result), timestamp);
+            if (this.alertValue >= 0) {
+                if (result > this.alertValue) {
+                    System.out.println("[ENVIO] Notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue);
+                    sendAlertNotification(new Notification(taskID, name, result, timestamp));
                 }
             }
-        } catch (RuntimeException e) {
-            System.out.println("Erro ao coletar as métricas: " + e.getMessage());
         }
     }
 }
