@@ -76,6 +76,7 @@
             }
           },
           "alertFlowConditions": {
+            "cpuUsage": 2,
             "packetLoss": 5,
             "jitter": 100,
             "latency": 20,

@@ -42,9 +42,9 @@ public class NMS_Server {
 
         // não deveria ser passado uma UDP_PORT? para o NetTaskServerHandler?
         Thread NetTaskListener = new Thread(new NetTaskServerListener(tasks, storageModule));
-        Thread AlertFlowListener = new Thread(new AlertFlowListener(TCP_PORT, storageModule));
-        NetTaskListener.start();
+        Thread AlertFlowListener = new Thread(new AlertFlowListener(storageModule));
         AlertFlowListener.start();
+        NetTaskListener.start();
 
         startDisplayScheduler();
         runMenu();

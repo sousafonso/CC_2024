@@ -20,17 +20,14 @@ public class Connection {
     private DatagramSocket netTaskSocket;
 
     public Connection(int timeout) {
-        try {
-            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME); // guardar o IP do servidor para não ter que resolver o hostname a cada envio
-        } catch (UnknownHostException e) {
-            System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
-        }
-
         this.TIMEOUT = timeout;
 
         try {
-            this.netTaskSocket = new DatagramSocket(UDP_PORT); // criar socket para enviar/receber pacotes via UDP
-            this.netTaskSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
+            this.serverIP = InetAddress.getByName(SERVER_HOST_NAME);
+            this.netTaskSocket = new DatagramSocket(UDP_PORT);
+            this.netTaskSocket.setSoTimeout(TIMEOUT);
+        } catch (UnknownHostException e) {
+            System.err.println("ERROR: Could not resolve server hostname: " + SERVER_HOST_NAME);
         } catch (SocketException e) {
             System.out.println("Erro ao criar sockets para conectar ao servidor");
         }
@@ -72,9 +69,11 @@ public class Connection {
             alertFlowSocket.setSoTimeout(TIMEOUT);
             DataOutputStream alertFlowOut = new DataOutputStream(new BufferedOutputStream(alertFlowSocket.getOutputStream()));
 
-            alertFlowOut.write(data.length);
+            alertFlowOut.writeInt(data.length);
             alertFlowOut.write(data);
             alertFlowOut.flush();
+
+            alertFlowOut.close();
             alertFlowSocket.close();
         } catch (IOException e) {
             System.out.println("Erro ao enviar notificação de alerta ao servidor");
