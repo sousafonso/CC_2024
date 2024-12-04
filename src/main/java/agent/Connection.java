@@ -30,8 +30,6 @@ public class Connection {
 
         this.TIMEOUT = timeout;
 
-        this.TIMEOUT = timeout;
-
         try {
             this.netTaskSocket = new DatagramSocket(UDP_PORT); // criar socket para enviar/receber pacotes via UDP
             this.netTaskSocket.setSoTimeout(TIMEOUT); // definir timeout para o socket
