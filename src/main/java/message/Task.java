@@ -62,7 +62,7 @@ public class Task extends Data {
             }
         }
         else{
-            this.linkMetrics = null;
+            this.linkMetrics = new ArrayList<>();
         }
 
         if(numLocalMetrics > 0){
@@ -79,7 +79,7 @@ public class Task extends Data {
                     }
                 }
                 else{
-                    interfaces = null;
+                    interfaces = new ArrayList<>();
                 }
 
                 LocalMetric localMetric = new LocalMetric(name, interfaces);
@@ -87,7 +87,7 @@ public class Task extends Data {
             }
         }
         else{
-            this.localMetrics = null;
+            this.localMetrics = new ArrayList<>();
         }
     }
 

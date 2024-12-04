@@ -46,24 +46,40 @@
         {
           "deviceId": "127.0.0.1",
           "deviceMetrics": {
-            "cpuUsage": true,
-            "ramUsage": true,
-            "interfaceStats": ["wlp1s0"]
+            "cpuUsage": false,
+            "ramUsage": false,
+            "interfaceStats": []
           },
           "linkMetrics": {
             "bandwidth": {
               "role": "client",
               "serverAddress": "127.0.0.1",
-              "duration": 8,
+              "duration": 1,
               "protocol": "TCP"
+            },
+            "jitter": {
+              "role": "client",
+              "serverAddress": "127.0.0.1",
+              "duration": 12,
+              "protocol": "UDP"
+            },
+            "packetLoss":  {
+              "role": "client",
+              "serverAddress": "127.0.0.1",
+              "duration": 10,
+              "protocol": "UDP"
+            },
+            "latency": {
+              "serverAddress": "127.0.0.1",
+              "frequency": 1,
+              "packageCount": 4
             }
           },
           "alertFlowConditions": {
-            "cpuUsage": 75,
-            "ramUsage": 90,
-            "interfaceStats": 1500,
-            "packetLoss": 4,
-            "jitter": 80
+            "packetLoss": 5,
+            "jitter": 100,
+            "latency": 20,
+            "bandwidth": 12
           }
         }
       ]

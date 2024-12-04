@@ -111,7 +111,7 @@ public class MetricCollector implements Runnable {
                     "-t", String.valueOf(metric.getDuration()),
                     "-u"));
         }
-        System.out.println("olá");
+
         for(String line : result) {
             Matcher matcher = pattern.matcher(line);
             if (matcher.find()) {
