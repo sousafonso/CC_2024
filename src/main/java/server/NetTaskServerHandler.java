@@ -30,7 +30,6 @@ import message.TaskResult;
 import storage.StorageModule;
 
 public class NetTaskServerHandler implements Runnable {
-    private Lock lock = new ReentrantLock();
     private final Map<String, Task> tasks;
     private DatagramPacket packet;
     private StorageModule storageModule;

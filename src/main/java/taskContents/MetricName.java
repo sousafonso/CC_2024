@@ -1,12 +1,12 @@
 package taskContents;
 
 public enum MetricName {
-    LATENCY,
-    PACKET_LOSS,
-    JITTER,
     CPU_USAGE,
     RAM_USAGE,
     INTERFACE_STATS,
+    LATENCY,
+    PACKET_LOSS,
+    JITTER,
     BANDWIDTH;
 
     public static MetricName fromInteger(int x){
@@ -31,6 +31,19 @@ public enum MetricName {
             case RAM_USAGE -> 4;
             case INTERFACE_STATS -> 5;
             case BANDWIDTH -> 6;
+        };
+    }
+
+    @Override
+    public String toString() {
+        return switch (this){
+            case LATENCY -> "Latência";
+            case PACKET_LOSS -> "Perda de pacotes";
+            case JITTER -> "Jitter";
+            case CPU_USAGE -> "Utilização do CPU";
+            case RAM_USAGE -> "Utilização da RAM";
+            case INTERFACE_STATS -> "Stats da interface";
+            case BANDWIDTH -> "Largura de banda";
         };
     }
 }

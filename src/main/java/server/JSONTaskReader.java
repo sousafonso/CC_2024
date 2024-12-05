@@ -1,13 +1,19 @@
 package server;
 
-import java.io.*;
-import java.util.*;
+
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import taskContents.Conditions;
 import message.Task;
 import taskContents.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JSONTaskReader {
     private final String filePath = "./config/config.json";
@@ -22,7 +28,6 @@ public class JSONTaskReader {
         }
         catch(IOException e){
             System.out.println("Erro ao ler o ficheiro JSON");
-            e.printStackTrace();
             return null;
         }
     }
