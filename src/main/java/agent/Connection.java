@@ -9,6 +9,9 @@ import java.net.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/* Conexão centralizada para o NMS_Agent
+   Contém as informações necessárias para a comunicação com o servidor e gere a concorrência na utilização dos sockets entre as threads
+*/
 public class Connection {
     private final String SERVER_HOST_NAME = "10.0.4.10"; //TODO mudar conforme topologia
     private final int SERVER_UDP_PORT = 5000;

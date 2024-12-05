@@ -23,6 +23,9 @@ import taskContents.LinkMetric;
 import taskContents.LocalMetric;
 import taskContents.MetricName;
 
+/* Coletor de métricas
+   Responsável por executar os mecanismos necessários para medir uma métrica, ler o valor e enviar o resultado ao servidor
+ */
 public class MetricCollector implements Runnable {
     private static Lock iperfServerLock = new ReentrantLock();
     private Connection connection;
@@ -39,6 +42,8 @@ public class MetricCollector implements Runnable {
         this.linkMetric = linkMetric;
     }
 
+    /* Mede a utilização do CPU ou de RAM com os comandos 'top' ou 'free', respetivamente.
+    */
     private double collectCPUorRAMUsage(String command) throws RuntimeException {
         try {
             List<String> result = executeCommand(List.of("sh",
@@ -53,6 +58,9 @@ public class MetricCollector implements Runnable {
         return Double.MIN_VALUE;
     }
 
+    /* Mede a quantidade de pacotes que passaram numa dada interface (enviados + recebidos)
+       Lê a informação no ficheiro '/proc/net/dev'
+    */
     private double collectPackets(String interfaceName) throws IOException {
         String statsPath = "/proc/net/dev";
         try (BufferedReader br = new BufferedReader(new FileReader(statsPath))) {
@@ -71,6 +79,8 @@ public class MetricCollector implements Runnable {
         throw new IOException();
     }
 
+    /* Mede a latência da ligação para um destino com o comando 'ping'
+    */
     private double calculateLatency() throws RuntimeException{
         Latency latency = (Latency) this.linkMetric;
         try {
@@ -94,6 +104,9 @@ public class MetricCollector implements Runnable {
         return Double.MIN_VALUE;
     }
 
+    /* Mede uma métrica pelo comando 'iperf3'
+       Pode ser largura de banda, jitter ou packet loss
+    */
     private double calculateIperfMetric(MetricName name, Pattern pattern) throws RuntimeException{
         iperfServerLock.lock();
         try {
@@ -138,6 +151,8 @@ public class MetricCollector implements Runnable {
         return Double.MIN_VALUE;
     }
 
+    /* Executa o servidor iperf necessário para a medição das métricas pelos clientes
+    */
     private void runIperfServer(){
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(List.of("iperf3", "-s"));
@@ -152,6 +167,8 @@ public class MetricCollector implements Runnable {
         }
     }
 
+    /* Redireciona a execução da medição de uma métrica local para o método correto em função do tipo
+    */
     private double processLocalMetric() throws RuntimeException{
         double result = Double.MIN_VALUE;
         switch (localMetric.getMetricName()) {
@@ -177,7 +194,8 @@ public class MetricCollector implements Runnable {
 
         return result;
     }
-
+    /* Redireciona a execução da medição de uma métrica de ligação para o método correto em função do tipo
+    */
     private double processLinkMetric() throws RuntimeException {
         double result = Double.MIN_VALUE;
         IperfMetric iMetric;
@@ -221,6 +239,8 @@ public class MetricCollector implements Runnable {
         return result;
     }
 
+    /* Executa comandos necessários para as medições e devolve o seu output
+    */
     private List<String> executeCommand(List<String> command) throws RuntimeException{
         List<String> lines = new ArrayList<>();
         try {
@@ -245,7 +265,8 @@ public class MetricCollector implements Runnable {
 
         return lines;
     }
-
+    /* Cria e envia uma mensagem com os resultados da medição para o servidor
+    */
     private void sendTaskResult(TaskResult taskResult, LocalDateTime timestamp) {
         int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
         Message msg = new Message(seqNumber, 0, MessageType.TaskResult, taskResult);
@@ -255,7 +276,8 @@ public class MetricCollector implements Runnable {
         // Adicionar à lista de espera por ACK
         NMS_Agent.addToAckWaitingList(timestamp, msg);
     }
-
+    /* Cria e envia uma mensagem com a notificação de alerta para o servidor
+     */
     private void sendAlertNotification(Notification notification) {
         int seqNumber = new Random().nextInt(Integer.MAX_VALUE);
         Message msg = new Message(seqNumber, 0, MessageType.Notification, notification);
