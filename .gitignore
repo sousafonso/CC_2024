@@ -4,3 +4,4 @@ out/
 target/
 .vscode/
 dependency-reduced-pom.xml
+.DS_Store
