@@ -2,24 +2,29 @@ package message;
 
 import taskContents.MetricName;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class TaskResult extends Data {
     private String taskId;
     private MetricName metricName;
     private double result;
+    private LocalDateTime timestamp;
 
     // Construtor
-    public TaskResult(String taskId, MetricName metricName, double result) {
-        //super(timestamp);
+    public TaskResult(String taskId, MetricName metricName, double result, LocalDateTime timestamp) {
         this.taskId = taskId;
         this.metricName = metricName;
         this.result = result;
+        this.timestamp = timestamp;
     }
 
     public TaskResult(String[] fields) {
         int startIndex = 0;
         this.taskId = fields[startIndex++];
         this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
-        this.result = Double.parseDouble(fields[startIndex]);
+        this.result = Double.parseDouble(fields[startIndex++]);
+        this.timestamp = LocalDateTime.parse(fields[startIndex]);
     }
 
     // Getters e Setters
@@ -35,25 +40,16 @@ public class TaskResult extends Data {
         return result;
     }
 
-    public void setTaskId(String taskId) {
-        this.taskId = taskId;
-    }
-
-    public void setMetricName(MetricName metricName) {
-        this.metricName = metricName;
-    }
-
-    public void setResult(Double result) {
-        this.result = result;
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
     @Override
     public String getPayload() {
-        String s = taskId + ";" +
+        return taskId + ";" +
                 metricName.toInteger() + ";"
-                + result;
-
-        return s;
+                + result + ";"
+                + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     @Override
@@ -63,6 +59,6 @@ public class TaskResult extends Data {
         if (obj == null || obj.getClass() != this.getClass()) {return false;}
 
         TaskResult that = (TaskResult) obj;
-        return this.taskId.equals(that.taskId) && this.metricName == that.metricName && this.result == that.result;
+        return this.taskId.equals(that.taskId) && this.metricName == that.metricName && this.result == that.result && this.timestamp.equals(that.timestamp);
     }
 }
