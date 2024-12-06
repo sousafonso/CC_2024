@@ -26,6 +26,13 @@ public class Notification extends Data {
         this.timestamp = LocalDateTime.parse(fields[startIndex]);
     }
 
+    public Notification(Notification notification) {
+        this.taskID = notification.taskID;
+        this.metricName = notification.metricName;
+        this.measurement = notification.measurement;
+        this.timestamp = notification.timestamp;
+    }
+
     public String getTaskID() {
         return taskID;
     }
@@ -45,6 +52,21 @@ public class Notification extends Data {
     @Override
     public String getPayload() {
         return taskID + ";" + metricName.toInteger() + ";" + measurement + ";" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[").append(this.timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).append("] ");
+        sb.append(this.metricName).append(" -> ").append(this.measurement);
+        switch(metricName){
+            case CPU_USAGE, RAM_USAGE, PACKET_LOSS -> sb.append(" %");
+            case INTERFACE_STATS -> sb.append(" packets");
+            case BANDWIDTH -> sb.append(" Mbits/s");
+            case JITTER, LATENCY -> sb.append(" ms");
+        }
+
+        return sb.toString();
     }
 
 }

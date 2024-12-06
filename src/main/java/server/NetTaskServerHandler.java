@@ -83,7 +83,7 @@ public class NetTaskServerHandler implements Runnable {
         TaskResult taskResult = (TaskResult) msg.getData();
         System.out.println("[RECEBIDO] Task Result de " + packet.getAddress()+ " : " + taskResult.getTaskId() + " -> " + taskResult.getMetricName() + " " + taskResult.getResult());
         String deviceId = packet.getAddress().getHostAddress();
-        storageModule.storeMetric(deviceId, taskResult.getMetricName(), taskResult.getResult());
+        storageModule.storeMetric(deviceId, taskResult.getMetricName(), taskResult.getResult(), taskResult.getTimestamp());
         System.out.println("[Enviar] ACK para " + packet.getAddress() + " relativo a TaskResult" + taskResult.getTaskId() + " -> " + taskResult.getMetricName() + " " + taskResult.getResult());
         sendReply(new Message(msg.getSeqNumber() + 1, msg.getSeqNumber(), MessageType.Ack, null));
     }

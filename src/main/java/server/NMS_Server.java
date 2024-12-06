@@ -16,6 +16,7 @@ package server;
 import java.util.*;
 
 import message.*;
+import storage.MetricStats;
 import taskContents.LinkMetric;
 import taskContents.LocalMetric;
 import taskContents.MetricName;
@@ -69,6 +70,7 @@ public class NMS_Server {
 
     private void runMenu() {
         while (true) {
+            this.activeAgent = "";
             clearScreen();
             System.out.println("\n--- MENU PRINCIPAL ---");
             System.out.println("1. Escolher Agente");
@@ -192,26 +194,46 @@ public class NMS_Server {
 
     private void displayMetrics(MetricName name, boolean global) {
         clearScreen();
-        //se GLOBAL apresentar max, min e media da metrica NAME ao nível da rede global
-        //se não, apresentar max, min e media, mais últimas 10(ou menos) medições (valor + tempo) da metrica NAME ao nível do agent
+        MetricStats stats = storageModule.getMetrics(this.activeAgent, name , global);
+        if(global){
+            System.out.println("\n--- Stats globais da rede ---");
+        } else{
+            System.out.println("\n--- Stats de " + this.activeAgent + " ---");
+        }
+        System.out.println(name.toString() + ":");
+        System.out.println(stats.toStringMeasures());
         waitForEnter();
     }
 
     private void displayAllStats() {
         clearScreen();
-        //mostrar max, min e media de TODAS as métricas do active agent
+        Set<Map.Entry<MetricName, MetricStats>> stats = storageModule.getAllMetrics(this.activeAgent);
+        System.out.println("\n--- Stats de " + this.activeAgent+ " ---\n");
+        for(Map.Entry<MetricName, MetricStats> entry : stats) {
+            System.out.println(entry.getKey().toString() + ":");
+            System.out.println(entry.getValue().toString());
+        }
         waitForEnter();
     }
 
     private void displayAlerts(boolean global) {
         clearScreen();
-        //se GLOBAL, mostrar últimos 10 alertas da rede toda
-        //se não, mostrar últimos 10 alertas do activeAgent
+        List<Notification> alerts = storageModule.getAlerts(this.activeAgent, global);
+        if(global){
+            System.out.println("\n--- Alertas globais da rede ---");
+        } else{
+            System.out.println("\n--- Alertas de " + this.activeAgent + " ---");
+        }
+
+        for(Notification notification : alerts) {
+            System.out.println(notification.toString());
+        }
+
         waitForEnter();
     }
 
     private void waitForEnter() {
-        System.out.println("\nPressione Enter para continuar...");
+        System.out.print("\nPressione Enter para continuar... ");
         scanner.nextLine();
     }
 

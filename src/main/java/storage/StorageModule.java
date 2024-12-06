@@ -3,74 +3,59 @@ package storage;
 import message.*;
 import taskContents.*;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StorageModule {
-    public static class MetricStats {
-        private double lastValue;
-        private double minValue = Double.MAX_VALUE;
-        private double maxValue = Double.MIN_VALUE;
+    private ConcurrentHashMap<String, ConcurrentHashMap<MetricName, MetricStats>> agentMetricsStorage = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, List<Notification>> agentAlertsStorage = new ConcurrentHashMap<>();
 
-        public void update(double value) {
-            lastValue = value;
-            minValue = Math.min(minValue, value);
-            maxValue = Math.max(maxValue, value);
-        }
+    private ConcurrentHashMap<MetricName, MetricStats> globalStatsStorage = new ConcurrentHashMap<>();
+    private List<Notification> globalAlertsStorage = new ArrayList<>();
 
-        public double getLastValue() {
-            return lastValue;
-        }
-
-        public double getMinValue() {
-            return minValue;
-        }
-
-        public double getMaxValue() {
-            return maxValue;
-        }
-    }
-
-    private final Map<String, Map<MetricName, MetricStats>> metricsStorage = new HashMap<>();
-    private final Map<String, List<Notification>> alertsStorage = new HashMap<>();
-
-    public synchronized void storeMetric(String deviceId, MetricName metricName, double value) {
-        metricsStorage
-                .computeIfAbsent(deviceId, k -> new HashMap<>())
+    public synchronized void storeMetric(String deviceId, MetricName metricName, double value, LocalDateTime timestamp) {
+        agentMetricsStorage
+                .computeIfAbsent(deviceId, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(metricName, k -> new MetricStats())
-                .update(value);
+                .update(deviceId, value, timestamp);
+
+        globalStatsStorage
+                .computeIfAbsent(metricName, k -> new MetricStats())
+                .update(deviceId, value, timestamp);
     }
 
     public synchronized void storeAlert(String deviceId, Notification alert) {
-        alertsStorage.computeIfAbsent(deviceId, k -> new ArrayList<>()).add(alert);
+        final int maxStoredAlerts = 10;
+        List<Notification> measureList = agentAlertsStorage.get(deviceId);
+        if (measureList == null) {
+            measureList = new ArrayList<>();
+        }
+        else if (measureList.size() >= maxStoredAlerts) {
+            measureList.removeFirst();
+        }
+        measureList.add(new Notification(alert));
+        agentAlertsStorage.put(deviceId, measureList);
+
+        if (globalAlertsStorage.size() >= maxStoredAlerts) {
+            globalAlertsStorage.removeFirst();
+        }
+
+        globalAlertsStorage.add(new Notification(alert));
     }
 
-    public synchronized Map<MetricName, MetricStats> getMetrics(String deviceId) {
-        return metricsStorage.getOrDefault(deviceId, Collections.emptyMap());
+    public synchronized Set<Map.Entry<MetricName, MetricStats>> getAllMetrics(String agentId) {
+        return agentMetricsStorage.get(agentId).entrySet();
     }
 
-    public synchronized List<Notification> getAlerts(String deviceId) {
-        return alertsStorage.getOrDefault(deviceId, Collections.emptyList());
+    public synchronized MetricStats getMetrics(String agentId, MetricName metricName, boolean global) {
+        return global ? globalStatsStorage.get(metricName) : agentMetricsStorage.get(agentId).get(metricName);
     }
 
-    public synchronized void displayAllMetrics() {
-        System.out.println("=== Métricas ===");
-        metricsStorage.forEach((deviceId, metrics) -> {
-            System.out.println("Dispositivo: " + deviceId);
-            metrics.forEach((metricName, stats) -> {
-                System.out.printf("%s - Último Valor: %.2f, Mínimo: %.2f, Máximo: %.2f%n",
-                        metricName, stats.getLastValue(), stats.getMinValue(), stats.getMaxValue());
-            });
-        });
-    }
-
-    public synchronized void displayAllAlerts() {
-        System.out.println("=== Alertas ===");
-        alertsStorage.forEach((deviceId, alerts) -> {
-            System.out.println("Dispositivo: " + deviceId);
-            alerts.forEach(alert -> {
-                System.out.printf("Métrica: %s, Valor: %.2f, Timestamp: %s%n",
-                        alert.getMetricName(), alert.getMeasurement(), alert.getTimestamp());
-            });
-        });
+    public synchronized List<Notification> getAlerts(String deviceId, boolean global) {
+        return global ? globalAlertsStorage : agentAlertsStorage.get(deviceId);
     }
 }

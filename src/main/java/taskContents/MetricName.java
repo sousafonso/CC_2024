@@ -11,12 +11,12 @@ public enum MetricName {
 
     public static MetricName fromInteger(int x){
         return switch (x) {
-            case 0 -> LATENCY;
-            case 1 -> PACKET_LOSS;
-            case 2 -> JITTER;
-            case 3 -> CPU_USAGE;
-            case 4 -> RAM_USAGE;
-            case 5 -> INTERFACE_STATS;
+            case 0 -> CPU_USAGE;
+            case 1 -> RAM_USAGE;
+            case 2 -> INTERFACE_STATS;
+            case 3 -> LATENCY;
+            case 4 -> PACKET_LOSS;
+            case 5 -> JITTER;
             case 6 -> BANDWIDTH;
             default -> null;
         };
@@ -24,12 +24,12 @@ public enum MetricName {
 
     public int toInteger(){
         return switch (this) {
-            case LATENCY -> 0;
-            case PACKET_LOSS -> 1;
-            case JITTER -> 2;
-            case CPU_USAGE -> 3;
-            case RAM_USAGE -> 4;
-            case INTERFACE_STATS -> 5;
+            case CPU_USAGE -> 0;
+            case RAM_USAGE -> 1;
+            case INTERFACE_STATS -> 2;
+            case LATENCY -> 3;
+            case PACKET_LOSS -> 4;
+            case JITTER -> 5;
             case BANDWIDTH -> 6;
         };
     }
@@ -37,13 +37,13 @@ public enum MetricName {
     @Override
     public String toString() {
         return switch (this){
-            case LATENCY -> "Latência";
-            case PACKET_LOSS -> "Perda de pacotes";
+            case LATENCY -> "Latency";
+            case PACKET_LOSS -> "Packet Loss";
             case JITTER -> "Jitter";
-            case CPU_USAGE -> "Utilização do CPU";
-            case RAM_USAGE -> "Utilização da RAM";
-            case INTERFACE_STATS -> "Stats da interface";
-            case BANDWIDTH -> "Largura de banda";
+            case CPU_USAGE -> "CPU Usage";
+            case RAM_USAGE -> "RAM Usage";
+            case INTERFACE_STATS -> "Interface Stats";
+            case BANDWIDTH -> "Bandwidth";
         };
     }
 }
