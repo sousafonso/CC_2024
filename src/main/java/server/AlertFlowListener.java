@@ -47,6 +47,9 @@ public class AlertFlowListener implements Runnable {
             } catch (IOException e) {
                 System.err.println("Erro ao aceitar conexão AlertFlow de um cliente");
             }
+            if(Thread.interrupted()) {
+                break;
+            }
         }
     }
 }

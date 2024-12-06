@@ -25,7 +25,6 @@ import storage.StorageModule;
 public class NMS_Server {
     private StorageModule storageModule;
     private JSONTaskReader taskReader;
-    private Scanner scanner = new Scanner(System.in);
     private Map<String, Task> tasks;
     private Map<String, List<MetricName>> agentMetrics;
     private String activeAgent = "";
@@ -48,6 +47,10 @@ public class NMS_Server {
         NetTaskListener.start();
 
         runMenu();
+
+        AlertFlowListener.interrupt();
+        NetTaskListener.interrupt();
+        System.exit(0);
     }
 
     private void getMetricsByAgent() {
@@ -70,6 +73,7 @@ public class NMS_Server {
 
     private void runMenu() {
         while (true) {
+            Scanner scanner = new Scanner(System.in);
             this.activeAgent = "";
             clearScreen();
             System.out.println("\n--- MENU PRINCIPAL ---");
@@ -78,7 +82,12 @@ public class NMS_Server {
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
-            int opt = scanner.nextInt();
+            int opt;
+            try {
+                opt = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                opt = -1;
+            }
 
             switch (opt) {
                 case 1:
@@ -98,6 +107,7 @@ public class NMS_Server {
 
     private void menuChooseAgent() {
         clearScreen();
+        Scanner scanner = new Scanner(System.in);
         System.out.println("\n--- ESCOLHA DE AGENTE ---");
         System.out.print("Introduza o identificador de um agente: ");
 
@@ -114,13 +124,19 @@ public class NMS_Server {
     private void menuMetricOrAlert(boolean global) {
         while (true) {
             clearScreen();
+            Scanner scanner = new Scanner(System.in);
             System.out.println("\n--- MENU " + (global ? "" : this.activeAgent) + " ---");
             System.out.println("1. Consultar valores das métricas");
             System.out.println("2. Consultar valores dos alertas");
             System.out.println("0. Voltar");
             System.out.print("Escolha uma opção: ");
 
-            int opt = scanner.nextInt();
+            int opt;
+            try {
+                opt = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                opt = -1;
+            }
 
             switch (opt) {
                 case 1:
@@ -145,12 +161,19 @@ public class NMS_Server {
     private void menuChooseMetricQuantity() {
         while (true){
             clearScreen();
+            Scanner scanner = new Scanner(System.in);
             System.out.println("\n--- MENU " +  this.activeAgent + " ---");
             System.out.println("1. Consultar métrica individual");
             System.out.println("2. Consultar métricas gerais");
             System.out.println("0. Voltar");
 
-            int opt = scanner.nextInt();
+            int opt;
+            try {
+                opt = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                opt = -1;
+            }
+
             switch (opt) {
                 case 1:
                     menuChooseMetric(agentMetrics.get(this.activeAgent), false);
@@ -169,6 +192,7 @@ public class NMS_Server {
     private void menuChooseMetric(List<MetricName> metricNames, boolean global) {
         while (true) {
             clearScreen();
+            Scanner scanner = new Scanner(System.in);
             System.out.println("\n--- ESCOLHA TIPO DE MÉTRICA ---");
             int i = 1;
             for(MetricName metricName : metricNames) {
@@ -178,7 +202,12 @@ public class NMS_Server {
             System.out.println("0. Voltar");
             System.out.print("Escolha uma opção: ");
 
-            int opt = scanner.nextInt();
+            int opt;
+            try {
+                opt = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                opt = -1;
+            }
 
             if (opt == 0) {
                 return;
@@ -200,8 +229,13 @@ public class NMS_Server {
         } else{
             System.out.println("\n--- Stats de " + this.activeAgent + " ---");
         }
-        System.out.println(name.toString() + ":");
-        System.out.println(stats.toStringMeasures());
+
+        if(stats == null){
+            System.out.println("Sem valores a apresentar.");
+        } else {
+            System.out.println(name.toString() + ":");
+            System.out.println(stats.toStringMeasures());
+        }
         waitForEnter();
     }
 
@@ -209,9 +243,14 @@ public class NMS_Server {
         clearScreen();
         Set<Map.Entry<MetricName, MetricStats>> stats = storageModule.getAllMetrics(this.activeAgent);
         System.out.println("\n--- Stats de " + this.activeAgent+ " ---\n");
-        for(Map.Entry<MetricName, MetricStats> entry : stats) {
-            System.out.println(entry.getKey().toString() + ":");
-            System.out.println(entry.getValue().toString());
+
+        if(stats.isEmpty()){
+            System.out.println("Sem valores a apresentar.");
+        } else {
+            for (Map.Entry<MetricName, MetricStats> entry : stats) {
+                System.out.println(entry.getKey().toString() + ":");
+                System.out.println(entry.getValue().toString());
+            }
         }
         waitForEnter();
     }
@@ -225,14 +264,19 @@ public class NMS_Server {
             System.out.println("\n--- Alertas de " + this.activeAgent + " ---");
         }
 
-        for(Notification notification : alerts) {
-            System.out.println(notification.toString());
+        if(alerts.isEmpty()){
+            System.out.println("Sem valores a apresentar.");
+        } else {
+            for (Notification notification : alerts) {
+                System.out.println(notification.toString());
+            }
         }
 
         waitForEnter();
     }
 
     private void waitForEnter() {
+        Scanner scanner = new Scanner(System.in);
         System.out.print("\nPressione Enter para continuar... ");
         scanner.nextLine();
     }

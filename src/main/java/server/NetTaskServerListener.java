@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -44,33 +43,37 @@ public class NetTaskServerListener implements Runnable {
     @Override
     public void run() {
         try {
-            new Thread(() -> {
+            Thread packetRetransmiter = new Thread(() -> {
                 while (true) {
-                for(AckStatus status : waitingAck.values()) {
-                    if (status.getTries() > MAX_RETRIES) {
-                        waitingAck.remove(status.getMessage().getSeqNumber());
-                        continue;
-                    }
+                    for(AckStatus status : waitingAck.values()) {
+                        if (status.getTries() > MAX_RETRIES) {
+                            waitingAck.remove(status.getMessage().getSeqNumber());
+                            continue;
+                        }
 
-                    Duration timeDifference = Duration.between(status.getTimeSent(), LocalDateTime.now());
-                    if (timeDifference.compareTo(TIMEOUT) > 0) {
-                        try {
-                            byte[] msgBytes = status.getMessage().getPDU();
-                            DatagramPacket packet = new DatagramPacket(msgBytes, msgBytes.length, status.getSourceAddress(), status.getSourcePort());
-                            System.out.println("[RE-ENVIO] de mensagem para " + status.getSourceAddress() + ":" + status.getSourcePort());
-                            this.socket.send(packet);
-                            status.setTimeSent(LocalDateTime.now());
-                            status.incTries();
-                            waitingAck.put(status.getMessage().getSeqNumber(), status);
-                        } catch (IOException e) {
-                            System.err.println("Erro ao re-enviar pacote para o cliente");
+                        Duration timeDifference = Duration.between(status.getTimeSent(), LocalDateTime.now());
+                        if (timeDifference.compareTo(TIMEOUT) > 0) {
+                            try {
+                                byte[] msgBytes = status.getMessage().getPDU();
+                                DatagramPacket packet = new DatagramPacket(msgBytes, msgBytes.length, status.getSourceAddress(), status.getSourcePort());
+                                System.out.println("[RE-ENVIO] de mensagem para " + status.getSourceAddress() + ":" + status.getSourcePort());
+                                this.socket.send(packet);
+                                status.setTimeSent(LocalDateTime.now());
+                                status.incTries();
+                                waitingAck.put(status.getMessage().getSeqNumber(), status);
+                            } catch (IOException e) {
+                                System.err.println("Erro ao re-enviar pacote para o cliente");
+                            }
                         }
                     }
-                }
-                try {
-                    Thread.sleep(TIMEOUT);
-                } catch (InterruptedException ignored) {}
-            }}).start();
+                    try {
+                        Thread.sleep(TIMEOUT);
+                    } catch (InterruptedException ignored) {
+                        break;
+                    }
+            }});
+
+            packetRetransmiter.start();
 
             while (true) {
                 byte[] buffer = new byte[1024];
@@ -78,10 +81,13 @@ public class NetTaskServerListener implements Runnable {
                 this.socket.receive(packet);
                 Thread handler = new Thread(new NetTaskServerHandler(packet, tasks, storage));
                 handler.start();
+                if(Thread.interrupted()) {
+                    packetRetransmiter.interrupt();
+                    break;
+                }
             }
         } catch (Exception e) {
             System.err.println("ERROR: Could not start server listener");
-            e.printStackTrace();
         } finally {
             if (this.socket != null && !this.socket.isClosed()) {
                 this.socket.close();

@@ -4,10 +4,7 @@ import message.*;
 import taskContents.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StorageModule {
@@ -48,14 +45,25 @@ public class StorageModule {
     }
 
     public synchronized Set<Map.Entry<MetricName, MetricStats>> getAllMetrics(String agentId) {
-        return agentMetricsStorage.get(agentId).entrySet();
+        Map<MetricName, MetricStats> metricsForAgent = agentMetricsStorage.get(agentId);
+        return metricsForAgent != null ? metricsForAgent.entrySet() : Collections.emptySet();
     }
 
     public synchronized MetricStats getMetrics(String agentId, MetricName metricName, boolean global) {
-        return global ? globalStatsStorage.get(metricName) : agentMetricsStorage.get(agentId).get(metricName);
+        if(global){
+            return globalStatsStorage.get(metricName);
+        } else {
+            Map<MetricName, MetricStats> metricsForAgent = agentMetricsStorage.get(agentId);
+            return metricsForAgent != null ? metricsForAgent.get(metricName) : null;
+        }
     }
 
     public synchronized List<Notification> getAlerts(String deviceId, boolean global) {
-        return global ? globalAlertsStorage : agentAlertsStorage.get(deviceId);
+        if(global){
+            return globalAlertsStorage;
+        } else {
+            List<Notification> alertsForAgent = agentAlertsStorage.get(deviceId);
+            return alertsForAgent != null ? agentAlertsStorage.get(deviceId) : new ArrayList<>();
+        }
     }
 }
