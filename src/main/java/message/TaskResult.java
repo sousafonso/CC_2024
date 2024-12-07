@@ -56,7 +56,8 @@ public class TaskResult extends Data {
         return taskId + ";" +
                 metricName.toInteger() + ";"
                 + result + ";"
-                + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ";"
+                + measureInterface;
     }
 
     @Override
