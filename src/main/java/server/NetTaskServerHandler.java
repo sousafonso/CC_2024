@@ -97,7 +97,6 @@ public class NetTaskServerHandler implements Runnable {
             return;
         }
 
-        receivedPackets.add(msg.getSeqNumber());
         switch (msg.getType()) {
             case Regist:
                 receivedPackets.add(msg.getSeqNumber());
