@@ -1,6 +1,16 @@
 # CC_2024
 Desenvolvimento de um sistema de redes distribuído
 
+Compilação:
+Requisitos - maven
+Programa agente -> `mvn package -Pagent-build`
+Programa servidor -> `mvn package -Pserver-build`
+
+Execução:
+Na pasta CC_2024
+Programa agente -> `java -jar target/agent-build.jar <IP_agent>`
+Programa servidor -> `java -jar target/server-build.jar`
+
 Objetivo:
 O objetivo deste trabalho prático é desenvolver um Sistema de Monitorização de Redes distribuído, composto por um NMS_Server (servidor central) e vários NMS_Agents (agentes de monitorização), que monitoram o estado dos dispositivos de rede e enviam alertas ao servidor quando ocorrem anomalias críticas. O sistema precisa ser resiliente e capaz de operar num ambiente com falhas ou degradação da rede.
 
