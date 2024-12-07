@@ -254,7 +254,7 @@ public class NMS_Server {
         } else {
             for (Map.Entry<MetricName, MetricStats> entry : stats) {
                 System.out.println(entry.getKey().toString() + ":");
-                System.out.println(entry.getValue().toString());
+                System.out.println(entry.getValue().toStringStats(true));
             }
         }
         waitForEnter();
