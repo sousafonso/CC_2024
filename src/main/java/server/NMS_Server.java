@@ -223,7 +223,7 @@ public class NMS_Server {
 
     private void displayMetrics(MetricName name, boolean global) {
         clearScreen();
-        MetricStats stats = storageModule.getMetrics(this.activeAgent, name , global);
+        MetricStats stats = storageModule.getMetrics(this.activeAgent, name, global);
         if(global){
             System.out.println("\n--- Stats globais da rede ---");
         } else{
@@ -233,8 +233,13 @@ public class NMS_Server {
         if(stats == null){
             System.out.println("Sem valores a apresentar.");
         } else {
-            System.out.println(name.toString() + ":");
-            System.out.println(stats.toStringMeasures());
+            System.out.println("\n" + name.toString() + ":");
+            if(global){
+                System.out.println(stats.toStringStats(true));
+            }
+            else {
+                System.out.println(stats.toStringMeasures());
+            }
         }
         waitForEnter();
     }
@@ -268,7 +273,11 @@ public class NMS_Server {
             System.out.println("Sem valores a apresentar.");
         } else {
             for (Notification notification : alerts) {
-                System.out.println(notification.toString());
+                System.out.print(notification.toString());
+                if(global){
+                    System.out.print(" (" + notification.getID() + ")");
+                }
+                System.out.print("\n");
             }
         }
 

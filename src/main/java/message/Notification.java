@@ -6,13 +6,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Notification extends Data {
-    private String taskID;
+    private String ID;
     private MetricName metricName;
     private double measurement;
     private LocalDateTime timestamp;
 
-    public Notification(String taskID, MetricName metricName, double measurement, LocalDateTime timestamp) {
-        this.taskID = taskID;
+    public Notification(String ID, MetricName metricName, double measurement, LocalDateTime timestamp) {
+        this.ID = ID;
         this.metricName = metricName;
         this.measurement = measurement;
         this.timestamp = timestamp;
@@ -20,21 +20,21 @@ public class Notification extends Data {
 
     public Notification(String[] fields){
         int startIndex = 0;
-        this.taskID = fields[startIndex++];
+        this.ID = fields[startIndex++];
         this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
         this.measurement = Double.parseDouble(fields[startIndex++]);
         this.timestamp = LocalDateTime.parse(fields[startIndex]);
     }
 
     public Notification(Notification notification) {
-        this.taskID = notification.taskID;
+        this.ID = notification.ID;
         this.metricName = notification.metricName;
         this.measurement = notification.measurement;
         this.timestamp = notification.timestamp;
     }
 
-    public String getTaskID() {
-        return taskID;
+    public String getID() {
+        return ID;
     }
 
     public MetricName getMetricName() {
@@ -51,7 +51,7 @@ public class Notification extends Data {
 
     @Override
     public String getPayload() {
-        return taskID + ";" + metricName.toInteger() + ";" + measurement + ";" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return ID + ";" + metricName.toInteger() + ";" + measurement + ";" + timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     @Override

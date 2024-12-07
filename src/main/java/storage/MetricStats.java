@@ -10,13 +10,21 @@ public class MetricStats {
     private double maxValue = Double.MIN_VALUE;
     private double count = 0;
     private double sum = 0;
+    private String minAgent = "";
+    private String maxAgent = "";
     private List<Measure> measures = new ArrayList<>();
 
     public MetricStats() {}
 
     public synchronized void update(String agentId, double value, LocalDateTime timestamp) {
-        minValue = Math.min(minValue, value);
-        maxValue = Math.max(maxValue, value);
+        if(value < minValue) {
+            minValue = value;
+            minAgent = agentId;
+        }
+        if(value > maxValue) {
+            maxValue = value;
+            maxAgent = agentId;
+        }
         count++;
         sum += value;
 
@@ -38,16 +46,34 @@ public class MetricStats {
         return sum / count;
     }
 
-    @Override
-    public String toString() {
-        return "Valor máximo: " + getMaxValue() + "\n" +
-                "Valor mínimo: " + getMinValue() + "\n" +
-                "Valor médio: " + getAverage();
+    public synchronized String getMinAgent() {
+        return minAgent;
+    }
+
+    public synchronized String getMaxAgent() {
+        return maxAgent;
+    }
+
+    public String toStringStats(boolean global) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Valor máximo");
+        if(global) {
+            sb.append(" por ").append(getMaxAgent());
+        }
+        sb.append(": ").append(getMaxValue()).append('\n');
+        sb.append("Valor mínimo");
+        if(global) {
+            sb.append(" por ").append(getMinAgent());
+        }
+        sb.append(": ").append(getMinValue()).append('\n');
+        sb.append("Valor médio: ").append(getAverage());
+
+        return sb.toString();
     }
 
     public String toStringMeasures(){
         StringBuilder sb = new StringBuilder();
-        sb.append(this);
+        sb.append(this.toStringStats(false));
         sb.append("Últimas medições feitas:");
         for (Measure measure : measures) {
             sb.append("\n").append(measure.toString());

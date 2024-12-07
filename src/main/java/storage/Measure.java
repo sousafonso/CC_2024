@@ -14,18 +14,6 @@ public class Measure {
         this.timestamp = timestamp;
     }
 
-    public String getAgentID() {
-        return agentID;
-    }
-
-    public double getValue() {
-        return value;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
     @Override
     public String toString() {
         return "[" + this.timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "] " + "Valor: " + this.value;

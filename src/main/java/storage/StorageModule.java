@@ -41,7 +41,7 @@ public class StorageModule {
             globalAlertsStorage.removeFirst();
         }
 
-        globalAlertsStorage.add(new Notification(alert));
+        globalAlertsStorage.add(new Notification(deviceId, alert.getMetricName(), alert.getMeasurement(), alert.getTimestamp()));
     }
 
     public synchronized Set<Map.Entry<MetricName, MetricStats>> getAllMetrics(String agentId) {

@@ -17,10 +17,6 @@ public class LocalMetric {
         return metricName;
     }
 
-    public int getNumInterfaces() {
-        return numInterfaces;
-    }
-
     public List<String> getInterfaces() {
         return interfaces;
     }
