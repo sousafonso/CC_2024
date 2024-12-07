@@ -26,7 +26,6 @@ import storage.StorageModule;
 
 public class NetTaskServerHandler implements Runnable {
     private final Map<String, Task> tasks;
-    private Set<Integer> receivedPackets = new HashSet<>();
     private DatagramPacket packet;
     private StorageModule storageModule;
 
@@ -92,18 +91,18 @@ public class NetTaskServerHandler implements Runnable {
     @Override
     public void run() {
         Message msg = new Message(packet.getData(), packet.getLength());
-        if (msg == null || receivedPackets.contains(msg.getSeqNumber())){
+        if (msg == null || NetTaskServerListener.alreadyReceived(msg.getSeqNumber())){
             System.out.println("Processamento da mensagem falhou");
             return;
         }
 
         switch (msg.getType()) {
             case Regist:
-                receivedPackets.add(msg.getSeqNumber());
+                NetTaskServerListener.addToReceivedPackets(msg.getSeqNumber());
                 processRegister(msg);
                 break;
             case TaskResult:
-                receivedPackets.add(msg.getSeqNumber());
+                NetTaskServerListener.addToReceivedPackets(msg.getSeqNumber());
                 processTaskResult(msg);
                 break;
             case Ack:

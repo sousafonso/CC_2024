@@ -6,8 +6,12 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import message.Message;
 import message.Task;
@@ -19,6 +23,8 @@ public class NetTaskServerListener implements Runnable {
     private final int MAX_RETRIES = 5;
     private final Map<String, Task> tasks;
     private static ConcurrentHashMap<Integer, AckStatus> waitingAck = new ConcurrentHashMap<>();
+    private static Lock lock = new ReentrantLock();
+    private static Set<Integer> receivedPackets = new HashSet<>();
     private StorageModule storage;
     private DatagramSocket socket;
 
@@ -38,6 +44,24 @@ public class NetTaskServerListener implements Runnable {
 
     public static void removeFromAckWaitingList(int ackNumber) {
         waitingAck.remove(ackNumber);
+    }
+
+    public static void addToReceivedPackets(int seqNumber) {
+        lock.lock();
+        try{
+            receivedPackets.add(seqNumber);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static boolean alreadyReceived(int seqNumber) {
+        lock.lock();
+        try {
+            return receivedPackets.contains(seqNumber);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
