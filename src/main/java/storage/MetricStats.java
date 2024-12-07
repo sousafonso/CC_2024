@@ -31,7 +31,7 @@ public class MetricStats {
         if(measures.size() >= maxMeasures) {
             measures.removeFirst();
         }
-        measures.add(new Measure(agentId, value, timestamp));
+        measures.add(new Measure(value, timestamp));
     }
 
     public synchronized double getMinValue() {

@@ -4,12 +4,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Measure {
-    private String agentID;
     private double value;
     LocalDateTime timestamp;
 
-    public Measure(String agentID, double value, LocalDateTime timestamp) {
-        this.agentID = agentID;
+    public Measure(double value, LocalDateTime timestamp) {
         this.value = value;
         this.timestamp = timestamp;
     }
