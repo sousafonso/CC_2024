@@ -14,15 +14,15 @@ public class StorageModule {
     private ConcurrentHashMap<MetricName, MetricStats> globalStatsStorage = new ConcurrentHashMap<>();
     private List<Notification> globalAlertsStorage = new ArrayList<>();
 
-    public synchronized void storeMetric(String deviceId, MetricName metricName, double value, LocalDateTime timestamp) {
+    public synchronized void storeMetric(String deviceId, MetricName metricName, double value, LocalDateTime timestamp, String measureInterface) {
         agentMetricsStorage
                 .computeIfAbsent(deviceId, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(metricName, k -> new MetricStats())
-                .update(deviceId, value, timestamp);
+                .update(deviceId, value, timestamp, measureInterface);
 
         globalStatsStorage
                 .computeIfAbsent(metricName, k -> new MetricStats())
-                .update(deviceId, value, timestamp);
+                .update(deviceId, value, timestamp, measureInterface);
     }
 
     public synchronized void storeAlert(String deviceId, Notification alert) {

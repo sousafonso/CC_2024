@@ -44,24 +44,24 @@ public class MetricCollector implements Runnable {
 
     /* Mede a utilização do CPU ou de RAM com os comandos 'top' ou 'free', respetivamente.
     */
-    private double collectCPUorRAMUsage(String command) throws RuntimeException {
+    private String collectCPUorRAMUsage(String command) throws RuntimeException {
         try {
             List<String> result = executeCommand(List.of("sh",
                     "-c",
                     command.replaceAll("\\\\[$]", "\\$")));
 
-            return result.isEmpty() ? Double.MIN_VALUE : Double.parseDouble(result.getFirst().replaceAll(",", "."));
+            return ""+(result.isEmpty() ? Double.MIN_VALUE : Double.parseDouble(result.getFirst().replaceAll(",", ".")));
         } catch (RuntimeException e) {
             System.err.println("Medição de " + localMetric.getMetricName() + " falhou: " + e.getMessage());
         }
 
-        return Double.MIN_VALUE;
+        return ""+Double.MIN_VALUE;
     }
 
     /* Mede a quantidade de pacotes que passaram numa dada interface (enviados + recebidos)
        Lê a informação no ficheiro '/proc/net/dev'
     */
-    private double collectPackets(String interfaceName) throws IOException {
+    private String collectPackets(String interfaceName) throws IOException {
         String statsPath = "/proc/net/dev";
         try (BufferedReader br = new BufferedReader(new FileReader(statsPath))) {
             String line;
@@ -71,7 +71,7 @@ public class MetricCollector implements Runnable {
                     long receivedPackets = Long.parseLong(parts[2]); // received packets
                     long sentPackets = Long.parseLong(parts[10]);    // transmitted packets
                     System.out.println("Interface: " + interfaceName + " -> Received: " + receivedPackets + " Packets sent: " + sentPackets);
-                    return receivedPackets + sentPackets;
+                    return (receivedPackets + sentPackets) + ";" + interfaceName;
                 }
             }
         }
@@ -81,7 +81,7 @@ public class MetricCollector implements Runnable {
 
     /* Mede a latência da ligação para um destino com o comando 'ping'
     */
-    private double calculateLatency() throws RuntimeException{
+    private String calculateLatency() throws RuntimeException{
         Latency latency = (Latency) this.linkMetric;
         try {
             List<String> result = executeCommand(List.of("ping",
@@ -94,20 +94,20 @@ public class MetricCollector implements Runnable {
             for (String line : result) {
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
-                    return Double.parseDouble(matcher.group(1));
+                    return ""+Double.parseDouble(matcher.group(1));
                 }
             }
         } catch (RuntimeException e) {
             System.err.println("Medição da latência falhou: " + e.getMessage());
         }
 
-        return Double.MIN_VALUE;
+        return ""+Double.MIN_VALUE;
     }
 
     /* Mede uma métrica pelo comando 'iperf3'
        Pode ser largura de banda, jitter ou packet loss
     */
-    private double calculateIperfMetric(MetricName name, Pattern pattern) throws RuntimeException{
+    private String calculateIperfMetric(MetricName name, Pattern pattern) throws RuntimeException{
         iperfServerLock.lock();
         try {
             IperfMetric metric = (IperfMetric) this.linkMetric;
@@ -137,7 +137,7 @@ public class MetricCollector implements Runnable {
             for (String line : result) {
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
-                    return Double.parseDouble(matcher.group(1));
+                    return ""+Double.parseDouble(matcher.group(1));
                 }
             }
 
@@ -148,7 +148,7 @@ public class MetricCollector implements Runnable {
             iperfServerLock.unlock();
         }
 
-        return Double.MIN_VALUE;
+        return ""+Double.MIN_VALUE;
     }
 
     /* Executa o servidor iperf necessário para a medição das métricas pelos clientes
@@ -169,8 +169,8 @@ public class MetricCollector implements Runnable {
 
     /* Redireciona a execução da medição de uma métrica local para o método correto em função do tipo
     */
-    private double processLocalMetric() throws RuntimeException{
-        double result = Double.MIN_VALUE;
+    private String processLocalMetric() throws RuntimeException{
+        String result = ""+Double.MIN_VALUE;
         switch (localMetric.getMetricName()) {
             case CPU_USAGE:
                 result = collectCPUorRAMUsage("top -b -n1 | grep 'Cpu(s)' | awk '{print 100 - \\$8}'");
@@ -196,8 +196,8 @@ public class MetricCollector implements Runnable {
     }
     /* Redireciona a execução da medição de uma métrica de ligação para o método correto em função do tipo
     */
-    private double processLinkMetric() throws RuntimeException {
-        double result = Double.MIN_VALUE;
+    private String processLinkMetric() throws RuntimeException {
+        String result = ""+Double.MIN_VALUE;
         IperfMetric iMetric;
         switch (linkMetric.getMetricName()) {
             case LATENCY:
@@ -288,20 +288,27 @@ public class MetricCollector implements Runnable {
     }
 
     public void run() {
-        double result;
+        String resultStr;
         MetricName name;
         if (localMetric != null) {
-            result = processLocalMetric();
+            resultStr = processLocalMetric();
             name = localMetric.getMetricName();
         } else {
-            result = processLinkMetric();
+            resultStr = processLinkMetric();
             name = linkMetric.getMetricName();
         }
+
+        String[] parts = resultStr.split(";");
+        double result = Double.parseDouble(parts[0]);
 
         if (result != Double.MIN_VALUE) {
             LocalDateTime timestamp = LocalDateTime.now();
             System.out.println("[ENVIO] Resultado ao servidor: " + taskID + "-" + name + " -> " + result + "(" +this.alertValue+ ")");
-            sendTaskResult(new TaskResult(taskID, name, result, timestamp), timestamp);
+            String measureInterface = "";
+            if(name.equals(MetricName.INTERFACE_STATS)){
+                measureInterface = parts[1];
+            }
+            sendTaskResult(new TaskResult(taskID, name, result, timestamp, measureInterface), timestamp);
             if (this.alertValue >= 0 && result > this.alertValue) {
                 System.out.println("[ENVIO] Notificação ao servidor: " + taskID + "-" + name + " -> " + result + " > " + alertValue);
                 sendAlertNotification(new Notification(taskID, name, result, timestamp));

@@ -10,13 +10,15 @@ public class TaskResult extends Data {
     private MetricName metricName;
     private double result;
     private LocalDateTime timestamp;
+    private String measureInterface;
 
     // Construtor
-    public TaskResult(String taskId, MetricName metricName, double result, LocalDateTime timestamp) {
+    public TaskResult(String taskId, MetricName metricName, double result, LocalDateTime timestamp, String measureInterface) {
         this.taskId = taskId;
         this.metricName = metricName;
         this.result = result;
         this.timestamp = timestamp;
+        this.measureInterface = measureInterface;
     }
 
     public TaskResult(String[] fields) {
@@ -24,7 +26,8 @@ public class TaskResult extends Data {
         this.taskId = fields[startIndex++];
         this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
         this.result = Double.parseDouble(fields[startIndex++]);
-        this.timestamp = LocalDateTime.parse(fields[startIndex]);
+        this.timestamp = LocalDateTime.parse(fields[startIndex++]);
+        this.measureInterface = fields[startIndex];
     }
 
     // Getters e Setters
@@ -42,6 +45,10 @@ public class TaskResult extends Data {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public String getMeasureInterface() {
+        return measureInterface;
     }
 
     @Override

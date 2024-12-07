@@ -12,18 +12,22 @@ public class MetricStats {
     private double sum = 0;
     private String minAgent = "";
     private String maxAgent = "";
+    private String minInterface = ""; //usada para saber de que interface foi medida a métrica no caso de INTERFACE_STATS
+    private String maxInterface = ""; //usada para saber de que interface foi medida a métrica no caso de INTERFACE_STATS
     private List<Measure> measures = new ArrayList<>();
 
     public MetricStats() {}
 
-    public synchronized void update(String agentId, double value, LocalDateTime timestamp) {
+    public synchronized void update(String agentId, double value, LocalDateTime timestamp, String measureInterface) {
         if(value < minValue) {
             minValue = value;
             minAgent = agentId;
+            minInterface = measureInterface;
         }
         if(value > maxValue) {
             maxValue = value;
             maxAgent = agentId;
+            maxInterface = measureInterface;
         }
         count++;
         sum += value;
@@ -31,7 +35,7 @@ public class MetricStats {
         if(measures.size() >= maxMeasures) {
             measures.removeFirst();
         }
-        measures.add(new Measure(value, timestamp));
+        measures.add(new Measure(value, timestamp, measureInterface));
     }
 
     public synchronized double getMinValue() {
@@ -59,11 +63,17 @@ public class MetricStats {
         sb.append("Valor máximo");
         if(global) {
             sb.append(" por ").append(getMaxAgent());
+            if(!maxInterface.isEmpty()) {
+                sb.append(" (").append(maxInterface).append(")");
+            }
         }
         sb.append(": ").append(getMaxValue()).append('\n');
         sb.append("Valor mínimo");
         if(global) {
             sb.append(" por ").append(getMinAgent());
+            if(!minInterface.isEmpty()) {
+                sb.append(" (").append(minInterface).append(")");
+            }
         }
         sb.append(": ").append(getMinValue()).append('\n');
         sb.append("Valor médio: ").append(getAverage());
