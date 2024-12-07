@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import message.Message;
 import message.MessageType;
@@ -24,6 +26,7 @@ import storage.StorageModule;
 
 public class NetTaskServerHandler implements Runnable {
     private final Map<String, Task> tasks;
+    private Set<Integer> receivedPackets = new HashSet<>();
     private DatagramPacket packet;
     private StorageModule storageModule;
 
@@ -89,11 +92,12 @@ public class NetTaskServerHandler implements Runnable {
     @Override
     public void run() {
         Message msg = new Message(packet.getData(), packet.getLength());
-        if (msg == null) {
+        if (msg == null || receivedPackets.contains(msg.getSeqNumber())){
             System.out.println("Processamento da mensagem falhou");
             return;
         }
-
+        
+        receivedPackets.add(msg.getSeqNumber());
         switch (msg.getType()) {
             case Regist:
                 processRegister(msg);
