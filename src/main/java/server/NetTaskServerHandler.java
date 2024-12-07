@@ -96,13 +96,15 @@ public class NetTaskServerHandler implements Runnable {
             System.out.println("Processamento da mensagem falhou");
             return;
         }
-        
+
         receivedPackets.add(msg.getSeqNumber());
         switch (msg.getType()) {
             case Regist:
+                receivedPackets.add(msg.getSeqNumber());
                 processRegister(msg);
                 break;
             case TaskResult:
+                receivedPackets.add(msg.getSeqNumber());
                 processTaskResult(msg);
                 break;
             case Ack:
