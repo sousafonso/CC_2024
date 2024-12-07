@@ -27,7 +27,7 @@ public class TaskResult extends Data {
         this.metricName = MetricName.fromInteger(Integer.parseInt(fields[startIndex++]));
         this.result = Double.parseDouble(fields[startIndex++]);
         this.timestamp = LocalDateTime.parse(fields[startIndex++]);
-        this.measureInterface = fields[startIndex];
+        this.measureInterface = metricName.equals(MetricName.INTERFACE_STATS) ? fields[startIndex] : "";
     }
 
     // Getters e Setters
