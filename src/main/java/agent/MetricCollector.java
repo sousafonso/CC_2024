@@ -265,6 +265,7 @@ public class MetricCollector implements Runnable {
 
         return lines;
     }
+
     /* Cria e envia uma mensagem com os resultados da medição para o servidor
     */
     private void sendTaskResult(TaskResult taskResult, LocalDateTime timestamp) {
@@ -276,6 +277,7 @@ public class MetricCollector implements Runnable {
         // Adicionar à lista de espera por ACK
         NMS_Agent.addToAckWaitingList(timestamp, msg);
     }
+
     /* Cria e envia uma mensagem com a notificação de alerta para o servidor
      */
     private void sendAlertNotification(Notification notification) {

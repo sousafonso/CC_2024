@@ -5,15 +5,5 @@
 package message;
 
 public abstract class Data {
-    //private String timestamp;
-
-    /*public Data(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }*/
-
     public abstract String getPayload();
 }

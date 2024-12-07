@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Notification extends Data {
-    private String ID;
+    private String ID; //taskID, mas pode funcionar como agentID para efeitos de apresentação no servidor
     private MetricName metricName;
     private double measurement;
     private LocalDateTime timestamp;

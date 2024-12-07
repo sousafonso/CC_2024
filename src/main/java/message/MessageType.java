@@ -5,7 +5,6 @@ public enum MessageType {
     TaskResult,
     Notification,
     Ack;
-    // TODO fim de conexão ?
 
     public static MessageType fromByte(byte x) {
         return switch (x) {
