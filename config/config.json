@@ -73,7 +73,7 @@
         {
           "deviceId": "10.0.2.2",
           "deviceMetrics": {
-            "cpuUsage": false,
+            "cpuUsage": true,
             "ramUsage": true,
             "interfaceStats": ["eth0", "eth1", "eth2"]
           },
