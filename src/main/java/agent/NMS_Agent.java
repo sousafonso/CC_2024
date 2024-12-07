@@ -172,6 +172,12 @@ public class NMS_Agent {
                         waitingAck.put(result.getMessage().getSeqNumber(), result);
                     }
                 }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    break;
+                }
+
             }
         } finally {
             connection.close();
