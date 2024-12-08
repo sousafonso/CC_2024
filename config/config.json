@@ -122,6 +122,10 @@
               "frequency": 1,
               "packageCount": 5
             }
+          },
+          "alertFlowConditions": {
+            "bandwidth": 10,
+            "latency": 20
           }
         },
         {

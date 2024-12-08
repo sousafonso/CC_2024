@@ -86,7 +86,6 @@ public class NetTaskServerHandler implements Runnable {
     public void run() {
         Message msg = new Message(packet.getData(), packet.getLength());
         if (msg == null || NetTaskServerListener.alreadyReceived(msg.getSeqNumber())){
-            System.out.println("Processamento da mensagem falhou" + msg.getSeqNumber());
             return;
         }
 

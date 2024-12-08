@@ -84,7 +84,7 @@ public class MetricStats {
     public String toStringMeasures(){
         StringBuilder sb = new StringBuilder();
         sb.append(this.toStringStats(false));
-        sb.append("Últimas medições feitas:");
+        sb.append("\nÚltimas medições feitas:");
         for (Measure measure : measures) {
             sb.append("\n").append(measure.toString());
         }
